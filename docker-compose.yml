@@ -1,0 +1,323 @@
+services:
+  # ── PostgreSQL ──────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: guardagentai_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-guardagent}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-guardagent}
+      POSTGRES_DB: ${DB_NAME:-guardagent}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      POSTGRES_HOST_AUTH_METHOD: scram-sha-256
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/pg-init:/docker-entrypoint-initdb.d:ro
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 128M
+    command: >
+      postgres
+        -c shared_buffers=128MB
+        -c work_mem=8MB
+        -c maintenance_work_mem=64MB
+        -c max_connections=100
+        -c log_statement=mod
+        -c log_connections=on
+        -c log_disconnections=on
+        -c log_lock_waits=on
+        -c log_min_duration_statement=1000
+        -c idle_in_transaction_session_timeout=60000
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-guardagent}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ───────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: guardagentai_redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6380}:6379"
+    volumes:
+      - redis_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.5'
+    command: >
+      redis-server
+        --maxmemory 128mb
+        --maxmemory-policy noeviction
+        --save 60 1000
+        --save 300 100
+        --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Prisma Migrate (run once) ───────────────────────────
+  migrate:
+    build:
+      context: .
+      target: builder
+    container_name: guardagentai_migrate
+    command: npx prisma migrate deploy --schema=packages/backend/prisma/schema.prisma
+    environment:
+      DATABASE_URL: "postgresql://${DB_USER:-guardagent}:${DB_PASSWORD:-guardagent}@postgres:5432/${DB_NAME:-guardagent}?connection_limit=30&pool_timeout=30"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # ── Backend (Express API) ───────────────────────────────
+  backend:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.guardagent.org}
+        NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-5042002}
+        NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
+    container_name: guardagentai_backend
+    restart: unless-stopped
+    command: node packages/backend/dist/index.js
+    ports:
+      - "127.0.0.1:3010:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: "postgresql://${DB_USER:-guardagent}:${DB_PASSWORD:-guardagent}@postgres:5432/${DB_NAME:-guardagent}?connection_limit=30&pool_timeout=30"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379"
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_API_KEY: ${ADMIN_API_KEY}
+      ADMIN_SECRET: ${ADMIN_SECRET}
+      BOT_SHARED_SECRET: ${BOT_SHARED_SECRET}
+      CIRCLE_API_KEY: ${CIRCLE_API_KEY}
+      CIRCLE_ENTITY_SECRET: ${CIRCLE_ENTITY_SECRET}
+      CIRCLE_WALLET_SET_ID: ${CIRCLE_WALLET_SET_ID}
+      CIRCLE_KIT_KEY: ${CIRCLE_KIT_KEY:-}
+      SIWE_ALLOWED_DOMAINS: ${SIWE_ALLOWED_DOMAINS:-}
+      ARC_NETWORK: ${ARC_NETWORK:-arc-testnet}
+      WALLET_ACCOUNT_TYPE: ${WALLET_ACCOUNT_TYPE:-EOA}
+      SELLER_WALLET_ADDRESS: ${SELLER_WALLET_ADDRESS:-}
+      X402_FACILITATOR_URL: ${X402_FACILITATOR_URL:-https://gateway-api-testnet.circle.com}
+      CIRCLE_COMPLIANCE_KEY: ${CIRCLE_COMPLIANCE_KEY:-}
+      CIRCLE_MINT_SANDBOX_API_KEY: ${CIRCLE_MINT_SANDBOX_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      ADMIN_TELEGRAM_CHAT_ID: ${ADMIN_TELEGRAM_CHAT_ID:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      PYTH_ENDPOINT: ${PYTH_ENDPOINT:-https://hermes.pyth.network}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      FRONTEND_URL: ${FRONTEND_URL:-https://guardagent.org}
+      FRONTEND_ORIGINS: ${FRONTEND_ORIGINS:-https://guardagent.org,https://app.guardagent.org,https://www.guardagent.org}
+      AEGIS_WALLET_CHAIN: ${AEGIS_WALLET_CHAIN:-BASE}
+      AEGIS_MAX_USDC_PER_CALL: ${AEGIS_MAX_USDC_PER_CALL:-0.10}
+      CIRCLE_APP_ID: ${CIRCLE_APP_ID:-}
+      PLATFORM_ADMIN_WALLETS: ${PLATFORM_ADMIN_WALLETS:-}
+      ARC_FEE_RECIPIENT: ${ARC_FEE_RECIPIENT:-}
+      ARC_FEE_BPS: ${ARC_FEE_BPS:-0}
+      PRIVY_APP_ID: ${PRIVY_APP_ID:-}
+      PRIVY_APP_SECRET: ${PRIVY_APP_SECRET:-}
+    volumes:
+      - aegis_cli_state:/home/guardagent/.circle-cli
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Frontend (Next.js) ──────────────────────────────────
+  frontend:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.guardagent.org}
+        NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-5042002}
+        NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
+        NEXT_PUBLIC_CIRCLE_APP_ID: ${NEXT_PUBLIC_CIRCLE_APP_ID:-${CIRCLE_APP_ID:-}}
+        NEXT_PUBLIC_PRIVY_APP_ID: ${PRIVY_APP_ID:-}
+        NEXT_PUBLIC_PLAUSIBLE_DOMAIN: ${NEXT_PUBLIC_PLAUSIBLE_DOMAIN:-guardagent.org}
+        NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
+    container_name: guardagentai_frontend
+    restart: unless-stopped
+    command: node_modules/.bin/next start -p 3000
+    working_dir: /app/packages/frontend
+    ports:
+      - "127.0.0.1:3009:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.guardagent.org}
+      NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-5042002}
+      NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
+      NEXT_PUBLIC_CIRCLE_APP_ID: ${NEXT_PUBLIC_CIRCLE_APP_ID:-${CIRCLE_APP_ID:-}}
+      NEXT_PUBLIC_PRIVY_APP_ID: ${PRIVY_APP_ID:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Worker (price monitor) ──────────────────────────────
+  worker:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.guardagent.org}
+        NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-5042002}
+        NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
+    container_name: guardagentai_worker
+    restart: unless-stopped
+    command: node packages/worker/dist/index.js
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://${DB_USER:-guardagent}:${DB_PASSWORD:-guardagent}@postgres:5432/${DB_NAME:-guardagent}?connection_limit=30&pool_timeout=30"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379"
+      PYTH_ENDPOINT: ${PYTH_ENDPOINT:-https://hermes.pyth.network}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3009}
+      NOTIFY_SHARED_SECRET: ${NOTIFY_SHARED_SECRET:-}
+      CDP_API_KEY_ID: ${CDP_API_KEY_ID:-}
+      CDP_API_KEY_SECRET: ${CDP_API_KEY_SECRET:-}
+      CDP_WALLET_SECRET: ${CDP_WALLET_SECRET:-}
+      # Wave 2.1: worker dispatches autonomous rule actions via backend internal endpoints
+      BACKEND_URL: ${BACKEND_URL:-http://backend:3001}
+      BOT_SHARED_SECRET: ${BOT_SHARED_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+  # ── Bot (Telegram) ─────────────────────────────────────
+  bot:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.guardagent.org}
+        NEXT_PUBLIC_CHAIN_ID: ${NEXT_PUBLIC_CHAIN_ID:-5042002}
+        NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: ${NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID}
+    container_name: guardagentai_bot
+    restart: unless-stopped
+    command: node packages/bot/dist/index.js
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://${DB_USER:-guardagent}:${DB_PASSWORD:-guardagent}@postgres:5432/${DB_NAME:-guardagent}?connection_limit=30&pool_timeout=30"
+      REDIS_URL: "redis://:${REDIS_PASSWORD}@redis:6379"
+      BACKEND_URL: "http://backend:3001"
+      BOT_SHARED_SECRET: ${BOT_SHARED_SECRET}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      BOT_HEALTH_PORT: 3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ── DB Backup (every 6 hours) ──────────────────────────
+  db-backup:
+    image: postgres:15-alpine
+    container_name: guardagentai_db_backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGUSER: ${DB_USER:-guardagent}
+      PGPASSWORD: ${DB_PASSWORD:-guardagent}
+      PGDATABASE: ${DB_NAME:-guardagent}
+    volumes:
+      - db_backups:/backups
+    entrypoint: /bin/sh
+    command: >
+      -c 'echo "Backup service started. Running every 6 hours."
+      && while true; do
+        TIMESTAMP=$$(date +%Y%m%d_%H%M%S)
+        FILE="/backups/guardagent_$${TIMESTAMP}.sql.gz"
+        echo "[$$( date )] Starting backup..."
+        pg_dump -U $$PGUSER -h $$PGHOST -d $$PGDATABASE --clean --if-exists --no-owner | gzip > "$$FILE"
+        SIZE=$$(stat -c%s "$$FILE" 2>/dev/null || echo 0)
+        if [ "$$SIZE" -gt 1000 ]; then
+          echo "[$$( date )] Backup OK: $$FILE ($$(( SIZE / 1024 )) KB)"
+        else
+          echo "[$$( date )] ERROR: Backup too small, removing"
+          rm -f "$$FILE"
+        fi
+        find /backups -name "guardagent_*.sql.gz" -mtime +30 -delete 2>/dev/null || true
+        COUNT=$$(find /backups -name "guardagent_*.sql.gz" | wc -l)
+        echo "[$$( date )] $$COUNT backup(s) stored. Sleeping 6h..."
+        sleep 21600
+      done'
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+
+volumes:
+  postgres_data:
+  redis_data:
+  aegis_cli_state:
+  db_backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${BACKUP_PATH:-./backups}

@@ -1,0 +1,56 @@
+node_modules/
+.env
+.env.*
+!.env.example
+dist/
+.next/
+*.log
+.DS_Store
+coverage/
+.turbo/
+
+# Build cache
+*.tsbuildinfo
+
+# IDE / Claude Code
+.claude/
+.vscode/
+.idea/
+
+# Root-level docs & images (not code)
+/*.docx
+/*.png
+/*.pdf
+generate-whitepaper.mjs
+
+# Database backups (contain sensitive data)
+backups/*.sql.gz
+backups/*.sql.gz.gpg
+!backups/.gitkeep
+
+# Prisma migrations tracked manually - don't auto-ignore
+# prisma/migrations/
+packages/backend/.pg-data
+
+# Circle entity-secret recovery files (sensitive)
+recovery_file_*.dat
+**/recovery_file_*.dat
+
+# Test/debug artifacts
+.playwright-mcp/
+packages/backend/test-db*.mjs
+
+/.agents/
+/audit/
+/docs/superpowers/
+docs/deep-research-grant-readiness.md
+docs/circle-call-talking-points.md
+/skills-lock.json
+/.github/
+/setup-dev.bat
+/start-dev.ps1
+/ecosystem.config.js
+/.mcp.json
+/docs/
+/scripts/
+/backups/

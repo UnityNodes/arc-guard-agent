@@ -1,0 +1,93 @@
+# ============================================================
+# GuardAgent - Caddy Reverse Proxy
+# ============================================================
+
+# ── Landing (guardagent.org) ──────────────────────────────
+guardagent.org {
+	reverse_proxy localhost:3009
+
+	header {
+		X-Content-Type-Options  nosniff
+		X-Frame-Options         DENY
+		Referrer-Policy         strict-origin-when-cross-origin
+		Permissions-Policy      "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.privy.io https://challenges.cloudflare.com https://static.cloudflareinsights.com https://stats.unitynodes.com https://browser.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://*.privy.io https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.guardagent.org https://*.privy.io https://*.privy.systems https://auth.privy.io https://*.coinbase.com https://*.walletconnect.com https://*.coingecko.com https://hermes.pyth.network https://base.blockscout.com wss://*.walletconnect.com wss://*.privy.io https://cloudflareinsights.com https://stats.unitynodes.com https://*.sentry.io; font-src 'self' data: https://fonts.gstatic.com; frame-src https://*.privy.io https://auth.privy.io https://challenges.cloudflare.com; frame-ancestors 'none';"
+		-Server
+	}
+
+	# Immutable cache for hashed static assets
+	@static path /_next/static/* /icons/* /favicon.png
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	# HTML responses: kill Next.js s-maxage so Cloudflare never caches HTML pages
+	# Match on response Content-Type so this only fires for actual page responses
+	@html_response header_regexp Content-Type "text/html"
+	header @html_response -Cache-Control
+	header @html_response Cache-Control "no-store, no-cache, must-revalidate"
+
+	encode gzip zstd
+
+	log {
+		output file /var/log/caddy/guardagent-access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+# ── App (app.guardagent.org) ──────────────────────────────
+app.guardagent.org {
+	reverse_proxy localhost:3009
+
+	header {
+		X-Content-Type-Options  nosniff
+		X-Frame-Options         DENY
+		Referrer-Policy         strict-origin-when-cross-origin
+		Permissions-Policy      "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.privy.io https://challenges.cloudflare.com https://static.cloudflareinsights.com https://stats.unitynodes.com https://browser.sentry-cdn.com; style-src 'self' 'unsafe-inline' https://*.privy.io https://fonts.googleapis.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.guardagent.org https://*.privy.io https://*.privy.systems https://auth.privy.io https://*.coinbase.com https://*.walletconnect.com https://*.coingecko.com https://hermes.pyth.network https://base.blockscout.com wss://*.walletconnect.com wss://*.privy.io https://cloudflareinsights.com https://stats.unitynodes.com https://*.sentry.io; font-src 'self' data: https://fonts.gstatic.com; frame-src https://*.privy.io https://auth.privy.io https://challenges.cloudflare.com; frame-ancestors 'none';"
+		-Server
+	}
+
+	@static path /_next/static/* /icons/* /favicon.png
+	header @static Cache-Control "public, max-age=31536000, immutable"
+
+	@html_response header_regexp Content-Type "text/html"
+	header @html_response -Cache-Control
+	header @html_response Cache-Control "no-store, no-cache, must-revalidate"
+
+	encode gzip zstd
+
+	log {
+		output file /var/log/caddy/guardagent-app-access.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}
+
+# ── WWW → apex redirect ───────────────────────────────────
+www.guardagent.org {
+	redir https://guardagent.org{uri} permanent
+}
+
+# ── Backend API ───────────────────────────────────────────
+api.guardagent.org {
+	reverse_proxy localhost:3010
+
+	header {
+		X-Content-Type-Options  nosniff
+		X-Frame-Options         DENY
+		-Server
+		-Via
+	}
+
+	header Cache-Control "no-store, no-cache, must-revalidate"
+	encode gzip
+
+	log {
+		output file /var/log/caddy/guardagent-api.log {
+			roll_size 10mb
+			roll_keep 5
+		}
+	}
+}

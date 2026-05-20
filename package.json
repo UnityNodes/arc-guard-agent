@@ -1,0 +1,38 @@
+{
+  "name": "guardagent",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:worker\" \"npm run dev:bot\"",
+    "dev:backend": "npm run dev --workspace=packages/backend",
+    "dev:frontend": "npm run dev --workspace=packages/frontend",
+    "dev:worker": "npm run dev --workspace=packages/worker",
+    "dev:bot": "npm run dev --workspace=packages/bot",
+    "build": "npm run build --workspaces",
+    "db:generate": "npm run db:generate --workspace=packages/backend",
+    "db:migrate": "npm run db:migrate --workspace=packages/backend",
+    "db:studio": "npm run db:studio --workspace=packages/backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "ts-node": "^10.9.2"
+  },
+  "overrides": {
+    "axios": "^1.8.0",
+    "postcss": "^8.5.15",
+    "next": {
+      "postcss": "^8.5.15"
+    },
+    "uuid": "^14.0.0",
+    "ws": "^8.20.1"
+  },
+  "dependencies": {
+    "bullmq": "^5.76.10",
+    "decimal.js": "^10.6.0",
+    "uuid": "^14.0.0",
+    "ws": "^8.20.1"
+  }
+}
