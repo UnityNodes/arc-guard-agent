@@ -1,0 +1,26 @@
+{
+  "name": "@guardagent/guardian",
+  "version": "0.1.0",
+  "description": "Policy guardrails for autonomous stablecoin agents on Arc and Circle - per-tx and daily caps, token allow/deny lists, destination allowlists, slippage caps, and multi-sig approval thresholds. Zero dependencies.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts"
+  ],
+  "keywords": [
+    "circle",
+    "arc",
+    "usdc",
+    "agent",
+    "guardrails",
+    "policy",
+    "treasury",
+    "x402"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test"
+  }
+}
