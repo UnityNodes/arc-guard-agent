@@ -1,0 +1,19 @@
+{
+  "name": "@guardagent/circle-public-rpc-adapter",
+  "version": "0.1.0",
+  "description": "A Circle Wallets adapter for Bridge Kit / Gateway / Swap / Earn that reads on-chain state via a public RPC instead of Circle's Smart Contract Platform Query Contract API - so Arc and other accounts without the SCP entitlement (HTTP 403) can still bridge, deposit, spend, and swap. Writes still go through Circle developer-controlled-wallets.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist/index.js", "dist/index.d.ts"],
+  "keywords": ["circle", "arc", "usdc", "bridge-kit", "gateway", "developer-controlled-wallets", "viem", "adapter"],
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@circle-fin/adapter-viem-v2": "^1.11.1",
+    "@circle-fin/usdckit": "^0.25.1",
+    "@circle-fin/unified-balance-kit": "^1.1.2",
+    "viem": "^2.30.0"
+  }
+}
