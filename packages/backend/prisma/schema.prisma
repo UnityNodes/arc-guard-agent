@@ -1,0 +1,523 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(cuid())
+  clerkId         String?   @unique
+  walletAddress   String    @unique
+  email           String?
+  telegramChatId  String?
+  telegramLinked  Boolean   @default(false)
+  autoMode        Boolean   @default(false)
+  plan            Plan      @default(FREE)
+  isActive        Boolean   @default(true)
+  // Escalation timings (minutes), user-configurable
+  escalation1Min  Int       @default(2)   // first reminder
+  escalation2Min  Int       @default(5)   // second reminder
+  escalation3Min  Int       @default(10)  // final reminder
+  autoExecMin     Int       @default(15)  // auto-execute if autoMode on
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  rules     Rule[]
+  alerts    Alert[]
+  sessions  Session[]
+  chatMessages ChatMessage[]
+  chatThreads  ChatThread[]
+  portfolioSnapshots PortfolioSnapshot[]
+  agentWallet AgentWallet?
+  botSwapGrants BotSwapGrant[]
+  limitOrders   LimitOrder[]
+  dcaOrders     DCAOrder[]
+  bridgeTransactions BridgeTransaction[]
+  fxHedges FxHedge[]
+  orgMemberships OrgMembership[]
+  approvalDecisions ApprovalDecision[]
+  jobs Job[]
+
+  circleUcwUserId  String?
+  circleUcwAddress String?
+  privyUserId      String?   @unique
+
+  @@index([walletAddress])
+  @@index([circleUcwAddress])
+}
+
+model Job {
+  id                 String   @id @default(cuid())
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId              String?
+  role               String
+  status             String   @default("DRAFT")
+  clientAddress      String
+  providerAddress    String
+  evaluatorAddress   String
+  hookAddress        String   @default("0x0000000000000000000000000000000000000000")
+  description        String
+  expiredAt          DateTime
+  budgetUsdc         String?
+  deliverableHash    String?
+  reasonHash         String?
+  createTxHash       String?
+  budgetTxHash       String?
+  fundTxHash         String?
+  submitTxHash       String?
+  completeTxHash     String?
+  error              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+  @@index([jobId])
+  @@index([clientAddress])
+  @@index([providerAddress])
+}
+
+model ChatThread {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String        @default("New conversation")
+  lastMessageAt DateTime      @default(now())
+  createdAt     DateTime      @default(now())
+  messages      ChatMessage[]
+
+  @@index([userId])
+  @@index([userId, lastMessageAt])
+}
+
+// In-app AI chat messages
+model ChatMessage {
+  id        String      @id @default(cuid())
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  threadId  String?
+  thread    ChatThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  alertId   String?
+  actions   String[]
+  createdAt DateTime    @default(now())
+
+  @@index([userId])
+  @@index([threadId])
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([threadId, createdAt])
+}
+
+model Rule {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  token       String
+  tokenSymbol String
+  condition   Condition
+  threshold   Float
+  cooldownMin Int         @default(60)
+  isActive    Boolean     @default(true)
+  lastTriggeredAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Wave 2: autonomous actions
+  // action: "ALERT" (default, creates Alert + Telegram) | "BRIDGE" (autonomous CCTP) | future others
+  action       String   @default("ALERT")
+  // triggerType: "PRICE" (default, monitors token price) | "BALANCE_USDC_GTE" (monitors agent wallet USDC)
+  triggerType  String   @default("PRICE")
+  // actionConfig: JSON payload depending on action.
+  //   for BRIDGE: { toChain: "base-sepolia", amountUsdc: "5", destAddress?: "0x..." }
+  actionConfig Json?
+
+  alerts Alert[]
+
+  @@index([userId])
+  @@index([isActive])
+  @@index([userId, isActive])          // findMany active rules by user
+  @@index([isActive, lastTriggeredAt]) // worker: scan all active rules
+}
+
+model Alert {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ruleId      String
+  rule        Rule        @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+
+  status      AlertStatus @default(PENDING)
+  message     String
+  currentPrice Float
+  threshold   Float
+  condition   Condition
+
+  sentAt      DateTime?
+  escalation1At DateTime?
+  escalation2At DateTime?
+  escalation3At DateTime?
+  executedAt  DateTime?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  botSwapGrant BotSwapGrant?
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, status])            // findMany pending alerts by user
+  @@index([userId, createdAt])         // recent alerts by user
+  @@index([status, escalation1At])     // worker: escalation scan
+}
+
+// One-time, short-lived grant that authorizes the Telegram bot to execute
+// the protective swap for a SPECIFIC alert. Generated when an alert is
+// created; consumed atomically when the user presses Execute.
+//
+// Replaces the old design where the bot reused a 7-day web JWT from the
+// Session table, that gave a compromised bot process full account-drain
+// access for a week. With per-alert grants, the blast radius is limited
+// to the active escalation window of currently-firing alerts.
+model BotSwapGrant {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alertId    String    @unique
+  alert      Alert     @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model AgentWallet {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentAddress    String    @unique
+  network         String    @default("arc-testnet")
+  maxTxSizeUsd           Float     @default(100)
+  dailyLimitUsd          Float     @default(500)
+  approvalThresholdUsd   Float?
+  slippagePercent        Float     @default(0.5)
+  allowedTokens          String[]
+  blockedTokens          String[]  @default([])
+  hiddenTokens           String[]  @default([])
+  isActive               Boolean   @default(true)
+  circleWalletId    String?
+  circleWalletSetId String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model AgentTransaction {
+  id         String   @id @default(cuid())
+  userId     String
+  type       String   // 'SWAP' | 'WITHDRAW'
+  tokenIn    String   // e.g. 'ETH'
+  tokenOut   String   // e.g. 'USDC' (same as tokenIn for withdraw)
+  amount     String   // human-readable amount of tokenIn
+  amountUsd  Float?   // estimated USD value at time of tx
+  txHash     String?
+  toAddress  String?  // withdrawal destination
+  status     String   @default("SUCCESS")
+  network    String
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model PortfolioSnapshot {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ethBalance  Float
+  usdcBalance Float
+  ethPrice    Float
+  totalUsd    Float
+  network     String
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+model CustomToken {
+  id          String   @id @default(cuid())
+  symbol      String
+  name        String
+  address     String   @unique
+  decimals    Int      @default(18)
+  chain       String   @default("base")
+  icon        String   @default("")
+  price       Float    @default(0)
+  holders     Int      @default(0)
+  liquidity   Float    @default(0)
+  marketCap   Float    @default(0)
+  isVerified  Boolean  @default(false)
+  addedBy     String?  // userId who first added it
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([symbol])
+  @@index([chain])
+}
+
+model AgentLearning {
+  id          String   @id @default(cuid())
+  event       String   // swap_success, swap_failed, slippage_error, token_not_found, no_liquidity
+  fromToken   String?
+  toToken     String?
+  toContract  String?
+  amount      Float?
+  slippage    Float?
+  error       String?
+  txHash      String?
+  userId      String?
+  context     String?  // JSON extra data
+  createdAt   DateTime @default(now())
+
+  @@index([event])
+  @@index([toContract])
+  @@index([createdAt])
+}
+
+model TokenReputation {
+  id          String   @id @default(cuid())
+  address     String   @unique
+  symbol      String
+  successCount Int     @default(0)
+  failCount    Int     @default(0)
+  lastSlippage Float?
+  avgSlippage  Float?
+  flags        String[] @default([])  // "low_liquidity", "high_slippage", "scam_suspected"
+  updatedAt    DateTime @updatedAt
+
+  @@index([symbol])
+}
+
+
+model BridgeTransaction {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fromChain         String
+  toChain           String
+  fromToken         String
+  toToken           String
+  amount            String
+  status            String   @default("PENDING")
+  txHash            String?
+  destinationTxHash String?
+  error             String?
+  resultJson        String?   @db.Text
+  lastRetryAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model FxHedge {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fromToken    String
+  toToken      String
+  amount       String
+  triggerRate  Decimal
+  direction    String    @default("BELOW")
+  status       String    @default("ACTIVE")
+  txHash       String?
+  error        String?
+  filledAt     DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum Condition {
+  ABOVE
+  BELOW
+}
+
+enum AlertStatus {
+  PENDING
+  SENT
+  ESCALATED
+  ACKNOWLEDGED
+  EXPIRED
+}
+
+model LimitOrder {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fromToken    String
+  toToken      String
+  watchToken   String    // token whose USD price we monitor (usually the non-stable)
+  amount       String    // human-readable amount of fromToken (e.g. "0.5")
+  triggerPrice Decimal   // USD price of watchToken that triggers the order
+  direction    String    // "ABOVE" | "BELOW"
+  slippage     Decimal   @default(0.5)
+  status       String    @default("ACTIVE") // ACTIVE | FILLED | FAILED | CANCELLED | EXPIRED
+  retries      Int       @default(0)
+  maxRetries   Int       @default(3)
+  txHash       String?
+  expiresAt    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([status])
+  @@index([userId])
+  @@index([status, expiresAt])
+}
+
+model DCAOrder {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fromToken      String
+  toToken        String
+  amountPerCycle String    // human-readable amount of fromToken per cycle (e.g. "10")
+  frequency      String    // "HOURLY" | "DAILY" | "WEEKLY"
+  nextRunAt      DateTime
+  totalRuns      Int       @default(0)
+  maxRuns        Int?      // null = run forever
+  status         String    @default("ACTIVE") // ACTIVE | PAUSED | COMPLETED | FAILED
+  lastTxHash     String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@index([userId])
+  @@index([status, nextRunAt])
+}
+
+model Organization {
+  id                   String   @id @default(cuid())
+  name                 String
+  ownerId              String
+  approvalThresholdUsd Float    @default(1000)
+  requiredApprovals    Int      @default(2)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  members   OrgMembership[]
+  approvals ApprovalRequest[]
+  auditLogs AuditLog[]
+
+  @@index([ownerId])
+}
+
+model OrgMembership {
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      OrgRole  @default(VIEWER)
+  createdAt DateTime @default(now())
+
+  @@unique([orgId, userId])
+  @@index([userId])
+  @@index([orgId])
+}
+
+model ApprovalRequest {
+  id                String   @id @default(cuid())
+  orgId             String
+  org               Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  requestedById     String
+  action            String
+  payload           Json
+  amountUsd         Float
+  status            ApprovalStatus @default(PENDING)
+  requiredApprovals Int
+  executedTxHash    String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  decisions ApprovalDecision[]
+
+  @@index([orgId])
+  @@index([status])
+  @@index([orgId, status])
+}
+
+model ApprovalDecision {
+  id         String   @id @default(cuid())
+  approvalId String
+  approval   ApprovalRequest @relation(fields: [approvalId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  decision   String
+  createdAt  DateTime @default(now())
+
+  @@unique([approvalId, userId])
+  @@index([approvalId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  orgId     String?
+  org       Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  userId    String?
+  actor     String
+  action    String
+  detail    Json?
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([orgId, createdAt])
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  SIGNER
+  VIEWER
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXECUTED
+  CANCELLED
+}
