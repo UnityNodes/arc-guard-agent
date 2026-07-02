@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Service. GuardAgent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a0a;
+      color: #d1d5db;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      padding: 48px 24px 80px;
+    }
+    .container { max-width: 760px; margin: 0 auto; }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+    .logo a { color: #60a5fa; text-decoration: none; font-weight: 700; font-size: 18px; }
+    h1 { font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .meta { font-size: 14px; color: #6b7280; margin-bottom: 48px; }
+    h2 { font-size: 1.2rem; font-weight: 700; color: #fff; margin: 40px 0 12px; }
+    p { margin-bottom: 16px; color: #9ca3af; }
+    strong { color: #e5e7eb; }
+    .highlight {
+      background: #1e293b;
+      border-left: 3px solid #3b82f6;
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 24px 0;
+    }
+    .highlight p { margin: 0; color: #93c5fd; }
+    .warning {
+      background: #1c1008;
+      border-left: 3px solid #f59e0b;
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 24px 0;
+    }
+    .warning p { margin: 0; color: #fcd34d; }
+    a { color: #60a5fa; }
+    hr { border: none; border-top: 1px solid #1f2937; margin: 40px 0; }
+    .footer { margin-top: 60px; font-size: 13px; color: #4b5563; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <a href="/">🛡️ GuardAgent</a>
+    </div>
+
+    <h1>Terms of Service</h1>
+    <p class="meta">Last updated April 4, 2026. Effective immediately upon use of the service.</p>
+
+    <div class="highlight">
+      <p>Please read these terms carefully before using GuardAgent. By connecting your wallet and using this service, you agree to everything described below.</p>
+    </div>
+
+    <h2>What GuardAgent Is</h2>
+    <p>GuardAgent is a crypto portfolio monitoring service built on the Base blockchain. It watches token prices around the clock, sends you alerts when prices hit your defined thresholds, and can execute protective swaps on your behalf through a separate agent wallet that you control and fund independently.</p>
+    <p>GuardAgent is operated by GuardAgent ("we", "us", "our"). By using this service, you enter into a binding agreement with us under these Terms of Service.</p>
+
+    <h2>Your Wallet and Your Keys</h2>
+    <p>GuardAgent operates on a strictly non-custodial basis. We <strong>never have access to your private keys, seed phrases, or the funds in your personal wallet.</strong> When you sign in, you use Sign-In with Ethereum (SIWE), which is a message signing process. No transaction is made, no gas is spent, and nothing moves from your wallet during sign-in.</p>
+    <p>Your wallet address is used as your account identifier. GuardAgent reads publicly available blockchain data to monitor prices and alert you, but it has no ability to move, access, or influence the assets in your personal wallet.</p>
+
+    <h2>The Agent Wallet</h2>
+    <p>GuardAgent offers an optional feature where a separate, dedicated agent wallet is created for you using Coinbase Developer Platform (CDP). This wallet is distinct from your personal wallet. You choose whether to fund it and how much to put in. The agent wallet is used exclusively to execute protective swaps (for example, swapping ETH to USDC) when you ask it to or when you enable AutoMode.</p>
+
+    <div class="warning">
+      <p>The agent wallet is funded by you and used only at your direction or with your explicit consent through AutoMode settings. Swaps carry inherent risks including price slippage, failed transactions, and market volatility. GuardAgent is not responsible for losses resulting from swap execution.</p>
+    </div>
+
+    <p>You set the maximum transaction size and daily limits for the agent wallet. These limits cannot be exceeded without your intervention. You can withdraw funds from the agent wallet at any time.</p>
+
+    <h2>AI Recommendations Are Not Financial Advice</h2>
+    <p>GuardAgent uses AI models (provided by Groq and OpenRouter) to generate insights and recommendations when your price alerts trigger. These insights are based on publicly available market data and are provided for informational purposes only.</p>
+
+    <div class="warning">
+      <p><strong>Nothing GuardAgent says, suggests, or recommends constitutes financial advice, investment advice, or trading advice.</strong> All investment decisions are yours alone. You are solely responsible for evaluating any information GuardAgent provides before acting on it. If you need professional financial advice, please consult a licensed financial advisor.</p>
+    </div>
+
+    <p>The AI observes market conditions as they appear at the time of alert generation. It does not have access to your complete financial situation, your risk tolerance, your investment goals, or information beyond what is publicly available. Its recommendations reflect only what it observes in the data at that moment.</p>
+
+    <h2>Price Alerts and Monitoring</h2>
+    <p>GuardAgent monitors prices using the Pyth Network price oracle. We make reasonable efforts to deliver alerts promptly, but we cannot guarantee that every alert will be delivered on time or at all. Price data may occasionally be delayed, unavailable, or inaccurate due to factors outside our control including oracle outages, network congestion, or third-party service disruptions.</p>
+    <p>Do not rely on GuardAgent as your only source of monitoring for time-critical trading decisions.</p>
+
+    <h2>Acceptable Use</h2>
+    <p>You agree to use GuardAgent only for lawful purposes. You will not attempt to reverse-engineer, scrape, or abuse the service. You will not use GuardAgent to facilitate market manipulation, money laundering, or any activity that violates applicable law. You are responsible for ensuring that your use of GuardAgent complies with the laws of your jurisdiction, including any regulations around cryptocurrency trading and investment.</p>
+    <p>We reserve the right to suspend or terminate your access if we believe you are violating these terms or misusing the service.</p>
+
+    <h2>Free and Pro Plans</h2>
+    <p>GuardAgent offers a free plan with up to 10 price rules and a Pro plan with expanded limits. We reserve the right to change pricing, features, and plan structures at any time with reasonable notice. If a paid plan is introduced or changed, existing users will be given advance notice before any charges apply.</p>
+
+    <h2>Third-Party Services</h2>
+    <p>GuardAgent depends on several external services to function, including Coinbase Developer Platform, Pyth Network, Telegram, Groq, and OpenRouter. We are not responsible for the availability, accuracy, or performance of these third-party services. Their own terms and privacy policies govern how they handle any data they receive.</p>
+
+    <h2>No Warranties</h2>
+    <p>GuardAgent is provided on an "as is" and "as available" basis. We make no warranties of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or uninterrupted availability. We do not guarantee that the service will be error-free, that alerts will always be delivered, or that swap executions will always succeed.</p>
+
+    <h2>Limitation of Liability</h2>
+    <p>To the fullest extent permitted by law, GuardAgent and its operators shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of funds, missed trades, failed swaps, or financial losses of any kind arising from your use of the service. Our total liability to you for any claim arising from your use of GuardAgent shall not exceed the amount you paid to us in the twelve months preceding the claim, or one hundred US dollars, whichever is greater.</p>
+    <p>You use this service at your own risk. Crypto markets are volatile and unpredictable. Past performance of any strategy or recommendation does not guarantee future results.</p>
+
+    <h2>Indemnification</h2>
+    <p>You agree to indemnify and hold GuardAgent harmless from any claims, losses, or damages arising from your misuse of the service, your violation of these terms, or your violation of any third-party rights.</p>
+
+    <h2>Changes to These Terms</h2>
+    <p>We may update these Terms from time to time. If we make significant changes, we will make a reasonable effort to notify you by updating the "Last updated" date at the top of this page. Your continued use of GuardAgent after changes are posted constitutes your acceptance of the updated terms.</p>
+
+    <h2>Governing Law</h2>
+    <p>These Terms are governed by the laws of the State of Delaware, United States, without regard to its conflict of law provisions. Any disputes arising from these Terms shall be resolved in the courts of Delaware.</p>
+
+    <h2>Contact</h2>
+    <p>If you have any questions about these Terms, you can reach us at <a href="mailto:guardagent.org@gmail.com">guardagent.org@gmail.com</a>.</p>
+
+    <hr />
+
+    <div class="footer">
+      <p>GuardAgent · <a href="/privacy">Privacy Policy</a> · <a href="/whitepaper">Whitepaper</a> · <a href="/">Back to app</a></p>
+    </div>
+  </div>
+</body>
+</html>

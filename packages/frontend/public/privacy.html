@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy. GuardAgent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0a0a;
+      color: #d1d5db;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+      padding: 48px 24px 80px;
+    }
+    .container { max-width: 760px; margin: 0 auto; }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 48px; }
+    .logo a { color: #60a5fa; text-decoration: none; font-weight: 700; font-size: 18px; }
+    h1 { font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .meta { font-size: 14px; color: #6b7280; margin-bottom: 48px; }
+    h2 { font-size: 1.2rem; font-weight: 700; color: #fff; margin: 40px 0 12px; }
+    p { margin-bottom: 16px; color: #9ca3af; }
+    strong { color: #e5e7eb; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0 28px; font-size: 14px; }
+    th { text-align: left; padding: 10px 14px; background: #111827; color: #9ca3af; font-weight: 600; border-bottom: 1px solid #1f2937; }
+    td { padding: 10px 14px; border-bottom: 1px solid #111827; color: #6b7280; vertical-align: top; }
+    td:first-child { color: #d1d5db; font-weight: 500; }
+    .highlight {
+      background: #1e293b;
+      border-left: 3px solid #3b82f6;
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      margin: 24px 0;
+    }
+    .highlight p { margin: 0; color: #93c5fd; }
+    a { color: #60a5fa; }
+    hr { border: none; border-top: 1px solid #1f2937; margin: 40px 0; }
+    .footer { margin-top: 60px; font-size: 13px; color: #4b5563; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <a href="/">🛡️ GuardAgent</a>
+    </div>
+
+    <h1>Privacy Policy</h1>
+    <p class="meta">Last updated April 4, 2026. Effective immediately upon use of the service.</p>
+
+    <div class="highlight">
+      <p>We built GuardAgent on a non-custodial model on purpose. We collect only what we need to make the service work, and we never touch your real wallet or private keys.</p>
+    </div>
+
+    <h2>Who We Are</h2>
+    <p>GuardAgent is a crypto portfolio monitoring service operated by GuardAgent. If you have any questions about how we handle your data, write to us at <a href="mailto:guardagent.org@gmail.com">guardagent.org@gmail.com</a>.</p>
+
+    <h2>What We Collect and Why</h2>
+    <p>GuardAgent requires no email address, no password, and no personal identity information to get started. You sign in using your blockchain wallet address, which becomes your account identifier. Here is everything we store and why we store it.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Why we have it</th>
+          <th>How long we keep it</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Wallet address</td>
+          <td>This is your account. It identifies you across sessions without requiring an email or password.</td>
+          <td>Until you delete your account</td>
+        </tr>
+        <tr>
+          <td>Price rules</td>
+          <td>Your alert configuration. We store the token, condition, threshold, and cooldown you set so we know when to notify you.</td>
+          <td>Until you delete the rule or your account</td>
+        </tr>
+        <tr>
+          <td>Alert history</td>
+          <td>A record of alerts that have triggered, including the price at the time. This lets you review past events in your dashboard.</td>
+          <td>Until you delete your account</td>
+        </tr>
+        <tr>
+          <td>Chat messages</td>
+          <td>Your conversations with the GuardAgent AI and alert notifications shown in the in-app chat. We store these so your history is available when you return.</td>
+          <td>Until you delete your account</td>
+        </tr>
+        <tr>
+          <td>Telegram ID</td>
+          <td>Only if you choose to link Telegram. We store your Telegram chat ID to send you notifications through our bot.</td>
+          <td>Until you unlink Telegram or delete your account</td>
+        </tr>
+        <tr>
+          <td>Agent wallet address and settings</td>
+          <td>Only if you create an agent wallet. We store the wallet address, your transaction limits, and network preference.</td>
+          <td>Until you delete your account</td>
+        </tr>
+        <tr>
+          <td>Session token</td>
+          <td>A short-lived JWT that keeps you authenticated without requiring you to re-sign every visit. Stored server-side and expires after 7 days.</td>
+          <td>7 days from creation</td>
+        </tr>
+        <tr>
+          <td>Plan status</td>
+          <td>Whether you are on a free or pro plan, which determines your feature limits.</td>
+          <td>Until you delete your account</td>
+        </tr>
+        <tr>
+          <td>Base App push token</td>
+          <td>Only if you open GuardAgent through the Base App and allow notifications. Used to send you push alerts through the Base App notification system.</td>
+          <td>Until you revoke notification permission or delete your account</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>What We Do Not Collect</h2>
+    <p>We do not collect your name, email address, phone number, IP address, browser fingerprint, or any information about the assets in your personal wallet. We do not track how you navigate the app beyond what is necessary to deliver the service. We do not run advertising, and we do not sell your data to anyone.</p>
+    <p>Your chat messages are processed by third-party AI models to generate responses, but we do not use your conversation history to train AI models.</p>
+
+    <h2>How We Use Your Information</h2>
+    <p>Everything we collect is used for one purpose: making GuardAgent work for you. We use your wallet address to identify your account and fetch your rules and alerts. We use your rules to monitor prices and trigger notifications. We use your Telegram ID to send you alerts. We use your chat messages to generate AI responses in context. We use your agent wallet settings to execute swaps when you authorize them.</p>
+    <p>We do not use your data for advertising, profiling, or any purpose unrelated to delivering the service.</p>
+
+    <h2>Third-Party Services That Receive Your Data</h2>
+    <p>GuardAgent relies on several external services to function. Here is what each one receives.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Service</th>
+          <th>What it receives</th>
+          <th>Why</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Coinbase CDP</td>
+          <td>Agent wallet address and transactions (only if you create an agent wallet)</td>
+          <td>Creates and manages the agent wallet, executes swaps on Base blockchain</td>
+        </tr>
+        <tr>
+          <td>Pyth Network</td>
+          <td>No personal data, we query public price feeds only</td>
+          <td>Real-time token price data for alert monitoring</td>
+        </tr>
+        <tr>
+          <td>Groq</td>
+          <td>Your chat messages and alert context</td>
+          <td>Primary AI provider that generates insights and chat responses</td>
+        </tr>
+        <tr>
+          <td>OpenRouter</td>
+          <td>Your chat messages and alert context (used as fallback if Groq is unavailable)</td>
+          <td>Backup AI provider for chat and alert insights</td>
+        </tr>
+        <tr>
+          <td>Telegram</td>
+          <td>Your Telegram chat ID and alert messages (only if you link Telegram)</td>
+          <td>Delivers price alert notifications to your Telegram account</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Each of these services has its own privacy policy that governs how they handle data on their end. We recommend reviewing them if you have concerns: <a href="https://www.coinbase.com/legal/privacy" target="_blank">Coinbase Privacy Policy</a>, <a href="https://groq.com/privacy-policy/" target="_blank">Groq Privacy Policy</a>, <a href="https://openrouter.ai/privacy" target="_blank">OpenRouter Privacy Policy</a>, <a href="https://telegram.org/privacy" target="_blank">Telegram Privacy Policy</a>.</p>
+
+    <h2>Your Wallet Is Not Our Business</h2>
+    <p>GuardAgent uses Sign-In with Ethereum (SIWE) for authentication. This means you sign a plain text message with your wallet to prove ownership, no transaction, no gas, nothing moves. We never see your private key or seed phrase. We have no ability to access, move, or interact with the assets in your personal wallet under any circumstances.</p>
+    <p>The agent wallet, if you create one, is a completely separate wallet that you fund independently. We store its public address and your chosen limits. The private key for the agent wallet is managed by Coinbase CDP and is never stored in our database.</p>
+
+    <h2>Data Security</h2>
+    <p>We use industry-standard security practices. All data is transmitted over encrypted connections (HTTPS). Authentication tokens are signed with a secret key and expire automatically. We store only what is necessary and do not log sensitive information. Our database and cache are protected and not exposed to the public internet.</p>
+    <p>No system is perfectly secure. In the event of a data breach that may affect you, we will notify you as soon as we reasonably can.</p>
+
+    <h2>Your Rights</h2>
+    <p>You can delete your price rules and chat history at any time from within the app. If you want to delete your entire account and all associated data, write to us at <a href="mailto:guardagent.org@gmail.com">guardagent.org@gmail.com</a> and we will process your request promptly.</p>
+    <p>If you are located in the European Union or California, you may have additional rights under GDPR or CCPA including the right to access, correct, or export your data. Contact us and we will work with you on any such request.</p>
+
+    <h2>Children</h2>
+    <p>GuardAgent is not intended for anyone under the age of 18. We do not knowingly collect any data from minors. If you believe a minor has used the service, please contact us and we will remove their data.</p>
+
+    <h2>Cookies and Tracking</h2>
+    <p>GuardAgent does not use advertising cookies, tracking pixels, or third-party analytics. The only data stored in your browser is your authentication token (in an HTTP-only cookie or local storage), which is used solely to keep you logged in.</p>
+
+    <h2>Changes to This Policy</h2>
+    <p>If we make meaningful changes to this Privacy Policy, we will update the date at the top of this page. We encourage you to check back periodically. Your continued use of GuardAgent after changes are posted means you accept the updated policy.</p>
+
+    <h2>Contact</h2>
+    <p>Questions, requests, or concerns about your privacy can be sent to <a href="mailto:guardagent.org@gmail.com">guardagent.org@gmail.com</a>. We aim to respond within 5 business days.</p>
+
+    <hr />
+
+    <div class="footer">
+      <p>GuardAgent · <a href="/terms">Terms of Service</a> · <a href="/whitepaper">Whitepaper</a> · <a href="/">Back to app</a></p>
+    </div>
+  </div>
+</body>
+</html>

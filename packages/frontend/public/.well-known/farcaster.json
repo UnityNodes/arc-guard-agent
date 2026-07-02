@@ -1,0 +1,18 @@
+{
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "frame": {
+    "version": "1",
+    "name": "GuardAgent",
+    "iconUrl": "https://guardagent.xyz/icons/icon-192x192.png",
+    "homeUrl": "https://guardagent.xyz",
+    "imageUrl": "https://guardagent.xyz/og-image.png",
+    "buttonTitle": "Open GuardAgent",
+    "splashImageUrl": "https://guardagent.xyz/icons/icon-192x192.png",
+    "splashBackgroundColor": "#030712",
+    "webhookUrl": "https://guardagent.xyz/api/webhook/farcaster"
+  }
+}
