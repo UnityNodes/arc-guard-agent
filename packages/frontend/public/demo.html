@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GuardAgent Demo: autonomous stablecoin agents on Arc</title>
-<meta name="description" content="Three minutes of GuardAgent running live on Arc Testnet: Guardian policy checks, a real CCTP bridge from chat, and a paid x402 inference.">
+<meta name="description" content="A guided walkthrough of GuardAgent live on Arc Testnet: email sign-in to a Circle wallet, a real CCTP bridge from chat, Guardian dry-runs, and the x402 handshake.">
 
 <meta property="og:type" content="video.other">
 <meta property="og:site_name" content="GuardAgent">
 <meta property="og:url" content="https://guardagent.org/demo">
 <meta property="og:title" content="GuardAgent Demo: autonomous stablecoin agents on Arc">
-<meta property="og:description" content="Three minutes of GuardAgent running live on Arc Testnet: Guardian policy checks, a real CCTP bridge from chat, and a paid x402 inference.">
+<meta property="og:description" content="A guided walkthrough of GuardAgent live on Arc Testnet: email sign-in to a Circle wallet, a real CCTP bridge from chat, Guardian dry-runs, and the x402 handshake.">
 <meta property="og:image" content="https://guardagent.org/demo/poster.jpg">
 <meta property="og:image:width" content="1920">
 <meta property="og:image:height" content="1080">
@@ -196,7 +196,7 @@
   <div class="wrap">
     <div class="eyebrow">GuardAgent · Live demo · Arc Testnet</div>
     <h1>Autonomous agents.<br><span class="glow">Guarded</span> money.</h1>
-    <p class="sub">Three minutes of GuardAgent running live on Arc: Guardian policy checks, a real CCTP bridge executed from chat, and an AI answer paid for with a $0.001 x402 nanopayment.</p>
+    <p class="sub">A guided walkthrough of GuardAgent live on Arc: email sign-in to a Circle wallet, a real CCTP bridge executed from chat, Guardian policy dry-runs, and the x402 pay-per-inference handshake.</p>
   </div>
 </section>
 
@@ -267,12 +267,13 @@
 
 <script>
   var CHAPTERS = [
-    { t: 0,   label: "The problem: autonomy without guardrails" },
-    { t: 19,  label: "Dashboard: agent wallet on Arc" },
-    { t: 36,  label: "Guardian: write the policy, dry-run it" },
-    { t: 59,  label: "Aegis executes a real CCTP bridge" },
-    { t: 114, label: "Live numbers: bridges, jobs, x402 payments" },
-    { t: 127, label: "Escrow jobs and the audit trail" }
+    { t: 0,   label: "The safety layer for agents that move money" },
+    { t: 35,  label: "Sign in, create the agent wallet" },
+    { t: 93,  label: "Aegis bridges USDC from chat" },
+    { t: 130, label: "Dashboard: every action settled on-chain" },
+    { t: 155, label: "Escrow jobs and Guardian dry-run" },
+    { t: 195, label: "Audit log: the paper trail" },
+    { t: 215, label: "x402: the 402 handshake, live" }
   ];
 
   var video = document.getElementById('video');
