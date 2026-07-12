@@ -4,6 +4,19 @@
 
 # ── Landing (guardagent.org) ──────────────────────────────
 guardagent.org {
+	# Demo video: static, byte-range capable, short canonical URL
+	handle /demo.mp4 {
+		root * /var/www/guardagent
+		file_server
+		header Cache-Control "public, max-age=3600"
+		header Access-Control-Allow-Origin "*"
+	}
+	handle /demo/poster.jpg {
+		root * /var/www/guardagent
+		file_server
+		header Cache-Control "public, max-age=3600"
+	}
+
 	reverse_proxy localhost:3009
 
 	header {

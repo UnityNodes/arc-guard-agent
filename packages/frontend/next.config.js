@@ -25,6 +25,10 @@ const nextConfig = {
           destination: '/dashboard',
           has: [{ type: 'host', value: 'app.guardagent.org' }],
         },
+        {
+          source: '/demo',
+          destination: '/demo.html',
+        },
       ],
       afterFiles: [],
       fallback: [],
