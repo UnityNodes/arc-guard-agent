@@ -180,7 +180,8 @@ inferRouter.post(
       return;
     }
 
-    const payer = (req as unknown as { payer?: string }).payer ?? null;
+    const reqAny = req as unknown as { payer?: string; payment?: { payer?: string } };
+    const payer = reqAny.payer ?? reqAny.payment?.payer ?? null;
     const today = new Date().toISOString().slice(0, 10);
 
     try {
