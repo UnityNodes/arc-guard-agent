@@ -35,6 +35,8 @@ export function initSentry() {
     sendDefaultPii: false,
     enabled: !!DSN,
     beforeSend(event) {
+      const exceptionMessage = event.exception?.values?.[0]?.value;
+      if (exceptionMessage?.startsWith('CORS: origin ')) return null;
       // Strip sensitive request headers that default Express integration attaches.
       if (event.request?.headers) {
         const h = event.request.headers as Record<string, string>;
