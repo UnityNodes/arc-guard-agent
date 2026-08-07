@@ -29,6 +29,10 @@ const nextConfig = {
           source: '/demo',
           destination: '/demo.html',
         },
+        {
+          source: '/demo-treasury',
+          destination: '/demo-treasury.html',
+        },
       ],
       afterFiles: [],
       fallback: [],

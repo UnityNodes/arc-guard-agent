@@ -8,10 +8,11 @@ Live at **[guardagent.org](https://guardagent.org)** · Built on **[Arc](https:/
 
 This repository is the whole platform. It ships two products on the same Arc rails, and each is entered in a different hackathon:
 
-| Product | What it leads with | Entered in | Deck |
-|---|---|---|---|
-| **Aegis Treasury** | An autonomous USDC treasury operator: conditional multi-step flows (limit orders, DCA, balance-to-bridge, FX hedge, USYC yield) built on Circle App Kits. Guardian is the risk layer. | **Build on Arc**, DeFi track primary, Agentic Economy secondary | [aegis-treasury](https://guardagent.org/deck/aegis-treasury/) |
-| **GuardAgent** | An autonomous stablecoin agent with a policy engine that pre-checks every move, plus x402 pay-per-inference. Guardian is the hero. | **Ignyte Stablecoin Commerce Stack Challenge**, Agentic Economy | [guardagent](https://guardagent.org/deck/guardagent/) |
+| Product | What it leads with | Entered in | Demo | Deck |
+|---|---|---|---|---|
+|---|---|---|---|---|
+| **Aegis Treasury** | An autonomous USDC treasury operator: conditional multi-step flows (limit orders, DCA, balance-to-bridge, FX hedge, USYC yield) built on Circle App Kits. Guardian is the risk layer. | **Build on Arc**, DeFi track primary, Agentic Economy secondary | [watch](https://guardagent.org/demo-treasury) | [deck](https://guardagent.org/deck/aegis-treasury/) |
+| **GuardAgent** | An autonomous stablecoin agent with a policy engine that pre-checks every move, plus x402 pay-per-inference. Guardian is the hero. | **Ignyte Stablecoin Commerce Stack Challenge**, Agentic Economy | [watch](https://guardagent.org/demo) | [deck](https://guardagent.org/deck/guardagent/) |
 
 Same codebase, same live deployment, two framings of what it is for. The sections below describe the platform as a whole.
 
