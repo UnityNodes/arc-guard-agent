@@ -149,6 +149,31 @@ inferRouter.get('/stats', async (_req: Request, res: Response): Promise<void> =>
 // If SELLER_WALLET_ADDRESS is not configured (e.g. local dev), the endpoint
 // falls through without payment so development isn't blocked.
 
+// Some upstream model failures cannot be fixed by retrying: an exhausted or
+// suspended account keeps returning the same error. Those are latched here so
+// that the payment middleware is never reached, because a caller must not be
+// charged for a request this service already knows it cannot answer. The latch
+// expires on its own, so the endpoint resumes as soon as upstream is healthy.
+const UPSTREAM_RETRY_MS = 60_000;
+let upstreamDownUntil = 0;
+
+function isUnrecoverableUpstream(err: unknown): boolean {
+  const status = (err as { status?: number })?.status;
+  if (status === 401 || status === 403) return true;
+  const message = err instanceof Error ? err.message : String(err ?? '');
+  return /credit balance is too low|billing|insufficient.*quota/i.test(message);
+}
+
+function requireModelAvailable(_req: Request, res: Response, next: NextFunction): void {
+  if (Date.now() < upstreamDownUntil) {
+    res.status(503).json({
+      error: 'Inference is temporarily unavailable. No payment was taken for this request.',
+    });
+    return;
+  }
+  next();
+}
+
 function nanopayMiddleware(req: Request, res: Response, next: NextFunction): void {
   if (DEMO_MODE) {
     logger.info('nanopay', 'Demo mode - bypassing x402 payment (NANOPAY_DEMO_MODE=true)');
@@ -172,6 +197,7 @@ function nanopayMiddleware(req: Request, res: Response, next: NextFunction): voi
 
 inferRouter.post(
   '/',
+  requireModelAvailable,
   nanopayMiddleware,
   async (req: Request, res: Response): Promise<void> => {
     const parse = inferBodySchema.safeParse(req.body);
@@ -213,8 +239,12 @@ inferRouter.post(
       });
     } catch (err) {
       logger.error('nanopay', 'Inference failed', err);
+      if (isUnrecoverableUpstream(err)) {
+        upstreamDownUntil = Date.now() + UPSTREAM_RETRY_MS;
+        logger.error('nanopay', 'Upstream model is unavailable, refusing further requests before payment');
+      }
       res.status(503).json({
-        error: 'Inference temporarily unavailable. Payment will be refunded per x402 protocol.',
+        error: 'Inference temporarily unavailable. This request was not answered, contact us if it was billed.',
       });
     }
   },
