@@ -1,0 +1,168 @@
+1
+00:00:00,500 --> 00:00:04,842
+This is Aegis Treasury, an autonomous USDC treasury operator running
+
+2
+00:00:04,842 --> 00:00:06,398
+on Circle's Arc testnet.
+
+3
+00:00:06,398 --> 00:00:09,788
+Everything you are about to see is live, and every figure on
+
+4
+00:00:09,788 --> 00:00:11,692
+this screen comes from the chain.
+
+5
+00:00:12,500 --> 00:00:16,204
+Circle Gateway gives it one unified balance, and shows where that
+
+6
+00:00:16,204 --> 00:00:18,537
+liquidity actually sits.
+
+7
+00:00:19,100 --> 00:00:23,605
+Idle cash goes to Earn Kit, next to the live USYC rate.
+
+8
+00:00:24,000 --> 00:00:25,254
+Here is the interesting part.
+
+9
+00:00:25,254 --> 00:00:28,714
+Limit orders, dollar cost averaging, and hedges.
+
+10
+00:00:28,714 --> 00:00:32,870
+Conditions the treasury acts on with nobody watching.
+
+11
+00:00:33,500 --> 00:00:37,703
+I will arm a hedge. One EURC into USDC, the moment the oracle
+
+12
+00:00:37,703 --> 00:00:41,406
+rate drops below two. Guardian evaluates it before it is even
+
+13
+00:00:41,406 --> 00:00:43,717
+stored, and returns allow.
+
+14
+00:00:44,500 --> 00:00:46,218
+Now nothing happens on my side.
+
+15
+00:00:46,218 --> 00:00:49,307
+A scheduler sweeps every sixty seconds.
+
+16
+00:00:49,307 --> 00:00:54,403
+It reads the rate from Pyth, with staleness and confidence guards,
+
+17
+00:00:54,403 --> 00:00:57,689
+so a frozen or a wide price simply does not trigger.
+
+18
+00:00:57,689 --> 00:01:01,857
+When the condition holds, the policy engine gets the final word.
+
+19
+00:01:01,857 --> 00:01:06,954
+Per transaction cap, daily limit, token allowlist, slippage bound.
+
+20
+00:01:06,954 --> 00:01:09,427
+Only an allow reaches the chain.
+
+21
+00:01:09,427 --> 00:01:13,142
+A denial parks the hedge instead of retrying it forever.
+
+22
+00:01:13,142 --> 00:01:16,161
+This is the whole thesis of the product.
+
+23
+00:01:16,161 --> 00:01:20,410
+The treasury is genuinely unattended, and it still cannot exceed
+
+24
+00:01:20,410 --> 00:01:21,606
+the rails I wrote.
+
+25
+00:01:24,500 --> 00:01:27,658
+There it is. Filled, with a real transaction hash on Arc.
+
+26
+00:01:27,658 --> 00:01:29,318
+I never clicked execute.
+
+27
+00:01:29,318 --> 00:01:31,280
+The scheduler did.
+
+28
+00:01:33,500 --> 00:01:35,520
+The audit log separates who did what.
+
+29
+00:01:35,520 --> 00:01:40,733
+I armed the hedge. Aegis executed it nineteen seconds later,
+
+30
+00:01:40,733 --> 00:01:44,750
+for a dollar fifteen. Every allow and every denial is recorded
+
+31
+00:01:44,750 --> 00:01:46,132
+the same way.
+
+32
+00:01:48,500 --> 00:01:51,263
+This is the policy those actions were checked against.
+
+33
+00:01:51,263 --> 00:01:55,942
+Because Arc uses USDC for gas, a limit written in dollars stays
+
+34
+00:01:55,942 --> 00:02:00,145
+a limit in dollars. There is no gas token to model and no oracle
+
+35
+00:02:00,145 --> 00:02:01,921
+sitting between the rule and the money.
+
+36
+00:02:04,500 --> 00:02:08,296
+Cross chain settlement runs on CCTP through Bridge Kit, burning
+
+37
+00:02:08,296 --> 00:02:12,801
+on Arc and minting on Base Sepolia, with a reconciler that retries
+
+38
+00:02:12,801 --> 00:02:16,853
+any transfer that burned but has not minted yet.
+
+39
+00:02:18,500 --> 00:02:19,777
+And the numbers are public.
+
+40
+00:02:19,777 --> 00:02:24,166
+Fifty one bridges, real swap volume, paid inferences over x402,
+
+41
+00:02:24,166 --> 00:02:27,254
+and a fee taken natively inside Bridge Kit and Swap Kit.
+
+42
+00:02:27,254 --> 00:02:30,853
+Verify any of it yourself at guardagent dot org.
+
