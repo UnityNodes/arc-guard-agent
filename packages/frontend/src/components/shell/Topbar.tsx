@@ -14,6 +14,7 @@ const pageMeta: Record<string, { title: string; sub: string }> = {
   activity:  { title: 'Activity',    sub: 'On-chain transactions' },
   alerts:    { title: 'Alerts',      sub: 'Rules and notifications' },
   wallet:    { title: 'Wallet',      sub: 'Agent wallet on Arc' },
+  treasury:  { title: 'Treasury',    sub: 'Unified balance, yield, automation' },
   aegis:     { title: 'Aegis',       sub: 'AI agent status and tools' },
   guardian:  { title: 'Guardian',    sub: 'Spend policies and limits' },
   audit:     { title: 'Audit',       sub: 'Action log' },

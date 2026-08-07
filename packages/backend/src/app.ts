@@ -26,6 +26,7 @@ import { internalRouter } from './routes/internal';
 import { inferRouter } from './routes/infer';
 import { publicRouter } from './routes/public';
 import { gatewayRouter } from './routes/gateway';
+import { treasuryRouter } from './routes/treasury';
 import { prisma } from './lib/prisma';
 import { redis } from './lib/redis';
 
@@ -101,6 +102,7 @@ app.use('/api/jobs', jobsRouter);
 app.use('/api/infer', inferRouter);
 app.use('/api/public', publicRouter);
 app.use('/api/gateway', gatewayRouter);
+app.use('/api/treasury', treasuryRouter);
 app.use('/api/internal', internalRouter);
 
 app.get('/health', async (_req, res) => {

@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { BrandMark } from '@/components/Icons';
 import {
   IconWallet, IconBell, IconBuilding, IconSearch,
-  IconChat, IconSettings, IconShield, IconSparkle,
+  IconChat, IconSettings, IconShield, IconSparkle, IconTreasury,
 } from '@/components/Icons';
 import { api } from '@/lib/api';
 import { useBackendAuth } from '@/hooks/useBackendAuth';
@@ -25,6 +25,7 @@ const navAegis: NavItem[] = [
 const navMain: NavItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: IconSparkle },
   { id: 'wallet',    label: 'Wallet',    icon: IconWallet },
+  { id: 'treasury',  label: 'Treasury',  icon: IconTreasury },
   { id: 'jobs',      label: 'Jobs',      icon: IconBuilding },
   { id: 'guardian',  label: 'Guardian',  icon: IconShield },
   { id: 'alerts',    label: 'Alerts',    icon: IconBell },
