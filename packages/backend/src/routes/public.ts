@@ -16,6 +16,9 @@ export const publicRouter = Router();
 const CACHE_KEY = 'public:stats:v2';
 const CACHE_TTL = 60;
 
+// Swap Kit routes both of these; FX_SWAP is the older label still present in the ledger.
+const SWAP_TYPES = ['SWAP', 'FX_SWAP', 'FX_HEDGE'];
+
 function leadingFloat(s: string | null | undefined): number {
   if (!s) return 0;
   const m = s.match(/[\d.]+/);
@@ -36,6 +39,7 @@ async function computeStats() {
     bridgeRows,
     nanopayTotal,
     swapVolume,
+    swapsSettled,
   ] = await Promise.all([
     prisma.user.count().catch(() => 0),
     prisma.agentWallet.count().catch(() => 0),
@@ -48,8 +52,11 @@ async function computeStats() {
     // Only swaps carry a Swap Kit customFee. BRIDGE-typed rows are excluded because
     // bridge volume is measured from BridgeTransaction below and would double-count.
     prisma.agentTransaction
-      .aggregate({ _sum: { amountUsd: true }, where: { status: 'SUCCESS', type: { in: ['SWAP', 'FX_HEDGE'] } } })
+      .aggregate({ _sum: { amountUsd: true }, where: { status: 'SUCCESS', type: { in: SWAP_TYPES } } })
       .catch(() => ({ _sum: { amountUsd: 0 } })),
+    // The settled swap ledger, which is the source of truth. AgentLearning is a
+    // side-log that only some swap paths write to, so it undercounts.
+    prisma.agentTransaction.count({ where: { status: 'SUCCESS', type: { in: SWAP_TYPES } } }).catch(() => 0),
   ]);
 
   // Agent intelligence (non-sensitive platform aggregate): how reliably the
@@ -82,9 +89,9 @@ async function computeStats() {
     jobsCompleted,
     nanopaymentInferences: nanopay,
     intelligence: {
-      swapsExecuted: learning.successes,
-      swapsAttempted: learning.total,
-      swapSuccessRate: learning.successRate,
+      swapsExecuted: swapsSettled,
+      swapAttemptsLogged: learning.total,
+      swapFailuresLogged: learning.failures,
       popularPairs: popularPairs.map((p) => ({ pair: `${p.from} to ${p.to}`, count: p.count })),
     },
     agent: {
