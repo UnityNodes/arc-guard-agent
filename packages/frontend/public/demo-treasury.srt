@@ -139,14 +139,34 @@ a limit in dollars. There is no gas token to model and no oracle
 sitting between the rule and the money.
 
 36
-00:02:04,500 --> 00:02:08,029
-Cross chain settlement runs on CCTP through Bridge Kit.
+00:02:05,500 --> 00:02:07,973
+The same treasury can be driven in plain language.
 
 37
-00:02:08,029 --> 00:02:11,489
-Anything left in flight gets retried by the reconciler.
+00:02:07,973 --> 00:02:12,083
+Aegis quotes the swap and shows the slippage it will accept before
 
 38
-00:02:11,489 --> 00:02:15,831
+00:02:12,083 --> 00:02:16,495
+anything is signed. I approve, and Swap Kit settles it on Arc.
+
+39
+00:02:16,495 --> 00:02:21,115
+Every one of its thirty seven tools passes the same policy engine
+
+40
+00:02:21,115 --> 00:02:23,612
+as the automation you just saw.
+
+41
+00:02:30,500 --> 00:02:34,018
+Cross chain settlement runs on CCTP through Bridge Kit.
+
+42
+00:02:34,018 --> 00:02:37,257
+Anything left in flight gets retried by the reconciler.
+
+43
+00:02:37,257 --> 00:02:41,181
 Every screen you have seen is live on Arc, and the code is public.
 
