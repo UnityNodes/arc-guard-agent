@@ -621,7 +621,7 @@ export default function WalletPage() {
       {showWithdraw && (
         <ModalShell title="Send from agent wallet" onClose={() => setShowWithdraw(false)}>
           <p style={{ fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.6, marginBottom: 16 }}>
-            Withdrawals run compliance screening + Guardian policy. Per-tx limit: <span className="ga-mono-num" style={{ color: 'var(--ink-1)' }}>{formatUsd(wallet.maxTxSizeUsd)}</span>.
+            Withdrawals are screened against the Guardian policy before they are signed. Per-tx limit: <span className="ga-mono-num" style={{ color: 'var(--ink-1)' }}>{formatUsd(wallet.maxTxSizeUsd)}</span>.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div>

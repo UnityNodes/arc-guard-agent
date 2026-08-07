@@ -388,7 +388,7 @@ export default function LandingPage() {
             icon: <div style={{ width: 36, height: 36, borderRadius: r.md, background: 'rgba(26,127,75,0.08)', display: 'grid', placeItems: 'center', color: T.ok }}><IconSparkle size={18}/></div>,
             eyebrow: 'Aegis',
             h: 'Aegis, the agent.',
-            p: 'Plain language in, on-chain action out. 37 tools spanning swap, bridge, jobs, reputation, send, faucet. Aegis composes them, Guardian gates them, you watch the trace.',
+            p: 'Plain language in, on-chain action out. 37 tools spanning swaps, CCTP bridges, unified balance, yield, scheduled orders, escrow jobs and x402 payments. Aegis composes them, Guardian gates them, you watch the trace.',
             bullets: ['37 tools across the full Circle stack', 'Tool traces visible inline in chat', 'ERC-8004 reputation · ERC-8183 jobs · CCTP bridge'],
             visual: <MockChat/>,
             reverse: true,

@@ -796,25 +796,6 @@ async function handleTool(
         };
       }
 
-      case 'get_recent_transactions': {
-        const limit = Math.min(Number(input.limit) || 5, 10);
-        const { listAgentTransactions } = await import('./arckit');
-        const wallet = await prisma.agentWallet.findUnique({
-          where: { userId: ctx.userId },
-          select: { circleWalletId: true },
-        });
-        if (!wallet?.circleWalletId) return { result: JSON.stringify({ error: 'No wallet configured' }) };
-        const txs = await listAgentTransactions(wallet.circleWalletId);
-        const rows = txs.slice(0, limit).map(t => ({
-          type: t.type,
-          amount: t.amount,
-          token: t.tokenIn,
-          status: t.status,
-          when: new Date(t.createdAt).toLocaleString(),
-        }));
-        return { result: JSON.stringify({ transactions: rows, count: rows.length }) };
-      }
-
       case 'find_token': {
         const query = String(input.query || '');
         // Check if it's a contract address

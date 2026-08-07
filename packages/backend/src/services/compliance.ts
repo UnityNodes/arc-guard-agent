@@ -46,6 +46,12 @@ async function screenViaCircle(address: string): Promise<ScreeningResult | null>
   }
 }
 
+let warnedAboutMock = false;
+
+// Fixture used when no Circle Compliance key is configured. It keys off the
+// address suffix so the block, review and pass paths can be exercised without
+// an account. Results are tagged source="mock" so nothing downstream can
+// mistake them for a real screening.
 function screenViaMock(address: string): ScreeningResult {
   const a = address.toLowerCase();
   if (a.endsWith('9999')) return { address, decision: 'BLOCK',  riskScore: 100, flags: ['CIRCLE_SANCTIONS_BLOCKLIST'],          source: 'mock', note: "Circle's Sanctions Blocklist" };
@@ -67,6 +73,10 @@ export async function screenAddress(address: string): Promise<ScreeningResult> {
   if (COMPLIANCE_KEY) {
     const r = await screenViaCircle(address);
     if (r) return r;
+  }
+  if (!warnedAboutMock) {
+    warnedAboutMock = true;
+    logger.warn('compliance', 'CIRCLE_COMPLIANCE_KEY is not set, so screening is the local fixture, not Circle. Every result carries source="mock".');
   }
   return screenViaMock(address);
 }
