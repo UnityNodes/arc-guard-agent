@@ -44,6 +44,9 @@ export function Sidebar() {
   const pathname = usePathname();
   const { ready } = useBackendAuth();
   const [alertCount, setAlertCount] = useState<number | null>(null);
+  // Read from the public stats endpoint so the number always matches the tools
+  // actually registered on the agent, rather than a figure baked into the UI.
+  const [toolCount, setToolCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!ready) return;
@@ -51,6 +54,12 @@ export function Sidebar() {
       .then(d => setAlertCount(d.rules?.length ?? 0))
       .catch(() => {});
   }, [ready]);
+
+  useEffect(() => {
+    api.get<{ agent?: { toolCount?: number } }>('/public/stats')
+      .then(d => setToolCount(d.agent?.toolCount ?? null))
+      .catch(() => {});
+  }, []);
 
   const route = pathname.split('/')[1] || 'dashboard';
 
@@ -115,7 +124,7 @@ export function Sidebar() {
           <div className="arc-aegis-stats">
             <div>
               <div className="arc-aegis-stat-label">tools</div>
-              <div className="arc-aegis-stat-val">36</div>
+              <div className="arc-aegis-stat-val">{toolCount ?? '-'}</div>
             </div>
             <div>
               <div className="arc-aegis-stat-label">rules</div>

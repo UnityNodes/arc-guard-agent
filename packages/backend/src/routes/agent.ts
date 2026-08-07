@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { requireAuth, AuthRequest } from '../middleware/auth';
-import { runTreasuryAutopilot } from '../services/autopilot';
+import { runTreasuryAutopilot, AUTOPILOT_DEFAULT_BUFFER_USD } from '../services/autopilot';
 import { getAgentCard, registerAgentIdentity, getIdentityStatus } from '../services/arcIdentity';
 import { logAudit } from '../services/audit';
 import { logger } from '../lib/logger';
@@ -125,7 +125,7 @@ const schema = z.object({ bufferUsd: z.number().nonnegative().max(1_000_000).opt
 
 agentRouter.post('/autopilot', async (req: AuthRequest, res: Response): Promise<void> => {
   const parsed = schema.safeParse(req.body ?? {});
-  const bufferUsd = parsed.success ? parsed.data.bufferUsd ?? 2 : 2;
+  const bufferUsd = parsed.success ? parsed.data.bufferUsd ?? AUTOPILOT_DEFAULT_BUFFER_USD : AUTOPILOT_DEFAULT_BUFFER_USD;
   try {
     const result = await runTreasuryAutopilot(req.userId!, bufferUsd);
     res.json({ result });

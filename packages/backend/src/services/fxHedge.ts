@@ -1,6 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { getUsycInfo } from './arcUsyc';
-import { executeSwapRoute } from './swapRouter';
+import { executeSwapRoute, classifySwapRoute } from './swapRouter';
 import { evaluateAction } from './guardian';
 import { logAudit } from './audit';
 import { redis } from '../lib/redis';
@@ -89,6 +89,64 @@ export async function getTokenUsdValue(symbol: string, amount: number): Promise<
   if (!isFinite(amount) || amount <= 0) return 0;
   const rate = await getCurrentFxRate(symbol, 'USDC');
   return rate != null ? rate * amount : 0;
+}
+
+const MAX_ACTIVE_HEDGES = 20;
+
+export async function listFxHedges(userId: string) {
+  return prisma.fxHedge.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 50 });
+}
+
+export async function cancelFxHedge(id: string, userId: string): Promise<boolean> {
+  const hedge = await prisma.fxHedge.findFirst({ where: { id, userId, status: 'ACTIVE' } });
+  if (!hedge) return false;
+  await prisma.fxHedge.update({ where: { id }, data: { status: 'CANCELLED' } });
+  return true;
+}
+
+export async function createFxHedge(params: {
+  userId: string;
+  fromToken: string;
+  toToken: string;
+  amount: string;
+  triggerRate: number;
+  direction: 'ABOVE' | 'BELOW';
+}) {
+  const from = params.fromToken.toUpperCase();
+  const to = params.toToken.toUpperCase();
+
+  if (from === to) throw new Error('Hedge needs two different tokens');
+  if (classifySwapRoute(from, to) === 'UNSUPPORTED') throw new Error(`No swap route for ${from} to ${to}`);
+
+  const amount = Number(params.amount);
+  if (!isFinite(amount) || amount <= 0) throw new Error('Invalid amount');
+
+  const active = await prisma.fxHedge.count({ where: { userId: params.userId, status: 'ACTIVE' } });
+  if (active >= MAX_ACTIVE_HEDGES) throw new Error(`You already have ${MAX_ACTIVE_HEDGES} armed hedges`);
+
+  // Show the caller what Guardian would say at this size, so the UI can warn
+  // before arming rather than after the hedge silently gets blocked at fill time.
+  const amountUsd = await getTokenUsdValue(from, amount);
+  const guard = await evaluateAction(params.userId, { action: 'SWAP', amountUsd, token: from });
+  const currentRate = await getCurrentFxRate(from, to);
+
+  const hedge = await prisma.fxHedge.create({
+    data: {
+      userId: params.userId,
+      fromToken: from,
+      toToken: to,
+      amount: params.amount,
+      triggerRate: params.triggerRate,
+      direction: params.direction,
+      status: 'ACTIVE',
+    },
+  });
+
+  return {
+    hedge,
+    currentRate,
+    guardianPreview: { decision: guard.result.decision, reasons: guard.result.reasons, amountUsd },
+  };
 }
 
 const HEDGE_LOCK_KEY = 'fx:hedge:sweep';

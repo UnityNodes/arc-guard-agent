@@ -40,7 +40,12 @@ async function harvestRewards(userId: string, walletId: string): Promise<Harvest
   }
 }
 
-export async function runTreasuryAutopilot(userId: string, bufferUsd = 2): Promise<AutopilotResult> {
+// Working capital the sweep always leaves on Arc so the agent can still pay gas
+// and settle small actions. Exported so the cockpit shows the same idle figure
+// the autopilot would actually act on.
+export const AUTOPILOT_DEFAULT_BUFFER_USD = 2;
+
+export async function runTreasuryAutopilot(userId: string, bufferUsd = AUTOPILOT_DEFAULT_BUFFER_USD): Promise<AutopilotResult> {
   const wallet = await prisma.agentWallet.findUnique({ where: { userId }, select: { circleWalletId: true, isActive: true } });
   if (!wallet?.circleWalletId) return { action: 'NONE', detail: 'No agent wallet configured' };
   if (!wallet.isActive) return { action: 'NONE', detail: 'Agent wallet is disabled' };

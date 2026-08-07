@@ -21,6 +21,8 @@ import { isUsycConfigured, getUsycInfo } from '../services/arcUsyc';
 import { getLimitOrders, createLimitOrder, cancelLimitOrder } from '../services/limitOrders';
 import { getDCAOrders, createDCAOrder, cancelDCAOrder, pauseDCAOrder, resumeDCAOrder } from '../services/dca';
 import { classifySwapRoute } from '../services/swapRouter';
+import { AUTOPILOT_DEFAULT_BUFFER_USD } from '../services/autopilot';
+import { createFxHedge, listFxHedges, cancelFxHedge, getCurrentFxRate } from '../services/fxHedge';
 
 // ── Treasury cockpit ──────────────────────────────────────────────────────────
 // One authenticated surface over services that already existed but had no REST
@@ -136,7 +138,7 @@ treasuryRouter.get('/overview', async (req: AuthRequest, res: Response): Promise
     }
     const wid = wallet.circleWalletId;
 
-    const [arcBalance, gateway, earnVault, earnPosition, usyc, limitOrders, dcaOrders, bridges, policy, spentToday] =
+    const [arcBalance, gateway, earnVault, earnPosition, usyc, limitOrders, dcaOrders, hedges, bridges, policy, spentToday] =
       await Promise.all([
         section('arcBalance', () => getAgentBalance(wid)),
         section('gateway', async () => {
@@ -151,6 +153,7 @@ treasuryRouter.get('/overview', async (req: AuthRequest, res: Response): Promise
         }),
         section('limitOrders', () => getLimitOrders(userId)),
         section('dcaOrders', () => getDCAOrders(userId)),
+        section('hedges', () => listFxHedges(userId)),
         section('bridges', () => prisma.bridgeTransaction.findMany({
           where: { userId }, orderBy: { createdAt: 'desc' }, take: 8,
           select: { id: true, fromChain: true, toChain: true, amount: true, status: true, txHash: true, createdAt: true },
@@ -161,7 +164,8 @@ treasuryRouter.get('/overview', async (req: AuthRequest, res: Response): Promise
 
     const payload = {
       wallet: { address: wallet.agentAddress, isActive: wallet.isActive },
-      sections: { arcBalance, gateway, earnVault, earnPosition, usyc, limitOrders, dcaOrders, bridges, policy, spentToday },
+      sections: { arcBalance, gateway, earnVault, earnPosition, usyc, limitOrders, dcaOrders, hedges, bridges, policy, spentToday },
+      autopilotBufferUsd: AUTOPILOT_DEFAULT_BUFFER_USD,
       updatedAt: new Date().toISOString(),
     };
 
@@ -377,5 +381,45 @@ treasuryRouter.post('/orders/dca/:id/resume', async (req: AuthRequest, res: Resp
 treasuryRouter.delete('/orders/dca/:id', async (req: AuthRequest, res: Response): Promise<void> => {
   const done = await cancelDCAOrder(req.params.id, req.userId as string);
   if (!done) { res.status(404).json({ error: 'Schedule not found' }); return; }
+  res.json({ ok: true });
+});
+
+// ── FX hedges ─────────────────────────────────────────────────────────────────
+
+treasuryRouter.get('/hedges', async (req: AuthRequest, res: Response): Promise<void> => {
+  res.json({ hedges: await listFxHedges(req.userId as string).catch(() => []) });
+});
+
+treasuryRouter.get('/hedges/rate', async (req: AuthRequest, res: Response): Promise<void> => {
+  const from = String(req.query.from || '').toUpperCase();
+  const to = String(req.query.to || '').toUpperCase();
+  if (!from || !to) { res.status(400).json({ error: 'from and to are required' }); return; }
+  const rate = await getCurrentFxRate(from, to).catch(() => null);
+  res.json({ from, to, rate });
+});
+
+const hedgeSchema = z.object({
+  fromToken: z.string().min(2),
+  toToken: z.string().min(2),
+  amount: z.string().regex(/^\d+(\.\d+)?$/),
+  triggerRate: z.number().positive(),
+  direction: z.enum(['ABOVE', 'BELOW']),
+});
+
+treasuryRouter.post('/hedges', async (req: AuthRequest, res: Response): Promise<void> => {
+  const parsed = hedgeSchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.flatten() }); return; }
+  try {
+    const out = await createFxHedge({ userId: req.userId as string, ...parsed.data });
+    await logAudit({ userId: req.userId as string, actor: 'user', action: 'FX_HEDGE_ARMED', detail: { hedgeId: out.hedge.id, ...parsed.data, guardianPreview: out.guardianPreview } });
+    res.status(201).json(out);
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : 'Could not arm hedge' });
+  }
+});
+
+treasuryRouter.delete('/hedges/:id', async (req: AuthRequest, res: Response): Promise<void> => {
+  const done = await cancelFxHedge(req.params.id, req.userId as string);
+  if (!done) { res.status(404).json({ error: 'Hedge not found or not active' }); return; }
   res.json({ ok: true });
 });

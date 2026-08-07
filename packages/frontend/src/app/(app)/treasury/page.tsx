@@ -20,6 +20,7 @@ type EarnPosition = { currentBalance?: string; shares?: string; pnl?: { totalYie
 type UsycInfo = { price?: number; apy?: number; compliance?: string[] } | null;
 type LimitOrder = { id: string; fromToken: string; toToken: string; amount: string; triggerPrice: string; direction: string; status: string };
 type DcaOrder = { id: string; fromToken: string; toToken: string; amountPerCycle: string; frequency: string; status: string; nextRunAt: string | null; runCount?: number };
+type Hedge = { id: string; fromToken: string; toToken: string; amount: string; triggerRate: string; direction: string; status: string; txHash: string | null; error: string | null };
 type BridgeRow = { id: string; fromChain: string; toChain: string; amount: string; status: string; txHash: string | null; createdAt: string };
 type Policy = { perTxUsd?: number; dailyUsd?: number; approvalThresholdUsd?: number };
 
@@ -33,10 +34,12 @@ type Overview = {
     usyc?: Section<UsycInfo>;
     limitOrders?: Section<LimitOrder[]>;
     dcaOrders?: Section<DcaOrder[]>;
+    hedges?: Section<Hedge[]>;
     bridges?: Section<BridgeRow[]>;
     policy?: Section<Policy>;
     spentToday?: Section<number>;
   };
+  autopilotBufferUsd?: number;
   updatedAt?: string;
 };
 
@@ -57,7 +60,13 @@ export default function TreasuryPage() {
 
   const [earnAmt, setEarnAmt] = useState('');
   const [gwAmt, setGwAmt] = useState('');
-  const [tab, setTab] = useState<'limit' | 'dca'>('limit');
+  const [tab, setTab] = useState<'limit' | 'dca' | 'hedge'>('limit');
+
+  const [hFrom, setHFrom] = useState('EURC');
+  const [hTo, setHTo] = useState('USDC');
+  const [hAmt, setHAmt] = useState('');
+  const [hRate, setHRate] = useState('');
+  const [hDir, setHDir] = useState<'ABOVE' | 'BELOW'>('BELOW');
 
   const [loFrom, setLoFrom] = useState('USDC');
   const [loTo, setLoTo] = useState('EURC');
@@ -173,6 +182,7 @@ export default function TreasuryPage() {
   const usyc = sectionData<UsycInfo>(S.usyc, null);
   const limitOrders = sectionData<LimitOrder[]>(S.limitOrders, []);
   const dcaOrders = sectionData<DcaOrder[]>(S.dcaOrders, []);
+  const hedges = sectionData<Hedge[]>(S.hedges, []);
   const bridges = sectionData<BridgeRow[]>(S.bridges, []);
   const policy = sectionData<Policy>(S.policy, {});
   const spentToday = sectionData<number>(S.spentToday, 0);
@@ -180,7 +190,10 @@ export default function TreasuryPage() {
   const arcUsdc = num(arc.usdc);
   const unified = num(gw.total);
   const inYield = num(pos?.currentBalance);
-  const idle = Math.max(arcUsdc - 5, 0);
+  // Same figure the autopilot acts on: spendable USDC minus the working-capital
+  // buffer it always leaves behind.
+  const buffer = ov.autopilotBufferUsd ?? 0;
+  const idle = Math.max(arcUsdc - buffer, 0);
   const address = ov.wallet.address as string;
 
   const activeLimit = limitOrders.filter(o => o.status === 'ACTIVE');
@@ -253,9 +266,9 @@ export default function TreasuryPage() {
           <div className="arc-kpi-sub">{vault?.apy != null ? `${vault.apy}% APY` : 'Earn Kit vault'}</div>
         </div>
         <div className="arc-kpi">
-          <div className="arc-kpi-label">Idle</div>
+          <div className="arc-kpi-label">Idle, sweepable</div>
           <div className="arc-kpi-value">{formatNum(idle)}</div>
-          <div className="arc-kpi-sub">max {formatUsd(policy.perTxUsd ?? 0)} per transaction</div>
+          <div className="arc-kpi-sub">keeps {formatUsd(buffer)} working capital on Arc</div>
         </div>
       </div>
 
@@ -268,7 +281,7 @@ export default function TreasuryPage() {
                 No Gateway balance yet. Deposit USDC to spend it from any supported chain.
               </div>
             ) : (
-              <div className="arc-table-wrap">
+              <div className="arc-table-wrap" style={{ maxHeight: 260, overflowY: 'auto' }}>
                 <table className="arc-table">
                   <thead><tr><th>Chain</th><th>Confirmed</th><th>Pending</th></tr></thead>
                   <tbody>
@@ -306,7 +319,7 @@ export default function TreasuryPage() {
             <Row label="Vault" value={vault?.name ?? 'Earn Kit vault'}/>
             <Row label="Your balance" value={`${formatNum(inYield)} ${vault?.token ?? 'USDC'}`} mono/>
             <Row label="Yield earned" value={formatNum(num(pos?.pnl?.totalYieldEarned))} mono/>
-            {usyc?.price != null && <Row label="USYC price" value={`$${usyc.price}`} mono/>}
+            {usyc?.price != null && <Row label="USYC price" value={`$${usyc.price.toFixed(4)}${usyc.apy != null ? `  ·  ${usyc.apy}% APY` : ''}`} mono/>}
             {usyc?.compliance && usyc.compliance.length > 0 && (
               <div style={{ marginTop: 10, fontSize: 11, color: 'var(--ink-3)', lineHeight: 1.55 }}>
                 {usyc.compliance.map((c, i) => <div key={i}>· {c}</div>)}
@@ -338,11 +351,86 @@ export default function TreasuryPage() {
             <div className="arc-tab-bar">
               <button className={`arc-tab${tab === 'limit' ? ' arc-tab-active' : ''}`} onClick={() => setTab('limit')}>Limit orders</button>
               <button className={`arc-tab${tab === 'dca' ? ' arc-tab-active' : ''}`} onClick={() => setTab('dca')}>DCA</button>
+              <button className={`arc-tab${tab === 'hedge' ? ' arc-tab-active' : ''}`} onClick={() => setTab('hedge')}>FX hedge</button>
             </div>
           </div>
         </div>
         <div className="arc-card-body">
-          {tab === 'limit' ? (
+          {tab === 'hedge' ? (
+            <>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                <select className="ga-select" value={hFrom} onChange={e => setHFrom(e.target.value)}>
+                  {['EURC', 'USDC', 'USYC'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <span style={{ alignSelf: 'center', color: 'var(--ink-3)' }}><IconSwap size={12}/></span>
+                <select className="ga-select" value={hTo} onChange={e => setHTo(e.target.value)}>
+                  {['USDC', 'EURC', 'USYC'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <input className="ga-input ga-input-mono" placeholder="amount" value={hAmt}
+                  onChange={e => setHAmt(e.target.value.replace(/[^\d.]/g, ''))} style={{ width: 110 }}/>
+                <select className="ga-select" value={hDir} onChange={e => setHDir(e.target.value as 'ABOVE' | 'BELOW')}>
+                  <option value="BELOW">when rate below</option>
+                  <option value="ABOVE">when rate above</option>
+                </select>
+                <input className="ga-input ga-input-mono" placeholder="trigger rate" value={hRate}
+                  onChange={e => setHRate(e.target.value.replace(/[^\d.]/g, ''))} style={{ width: 120 }}/>
+                <button className="arc-btn arc-btn-primary" disabled={!hAmt || !hRate || busy === 'hedge'}
+                  onClick={() => runAction('hedge', 'Arm FX hedge', () =>
+                    api.post<{ guardianPreview?: { decision: Decision; reasons: string[] } }>('/treasury/hedges', {
+                      fromToken: hFrom, toToken: hTo, amount: hAmt,
+                      triggerRate: parseFloat(hRate), direction: hDir,
+                    }).then(r => ({
+                      ok: true,
+                      decision: (r.guardianPreview?.decision ?? 'ALLOW') as Decision,
+                      reasons: r.guardianPreview?.decision !== 'ALLOW' ? r.guardianPreview?.reasons : undefined,
+                    })))}>
+                  Arm hedge
+                </button>
+              </div>
+              <p style={{ fontSize: 11.5, color: 'var(--ink-3)', marginBottom: 10, lineHeight: 1.55 }}>
+                Rotates the position automatically when the oracle rate crosses your trigger. The sweep runs every 60 seconds,
+                prices come from Pyth with staleness and confidence guards, and Guardian has to allow the fill or the hedge is
+                parked instead of executed.
+              </p>
+              {hedges.length === 0 ? (
+                <div className="arc-empty" style={{ padding: '18px 0', fontSize: 12.5, color: 'var(--ink-3)' }}>
+                  No hedges armed.
+                </div>
+              ) : (
+                <div className="arc-table-wrap">
+                  <table className="arc-table">
+                    <thead><tr><th>Pair</th><th>Amount</th><th>Trigger</th><th>Status</th><th></th></tr></thead>
+                    <tbody>
+                      {hedges.map(h => (
+                        <tr key={h.id}>
+                          <td>{h.fromToken} to {h.toToken}</td>
+                          <td style={{ fontVariantNumeric: 'tabular-nums' }}>{h.amount}</td>
+                          <td style={{ fontVariantNumeric: 'tabular-nums' }}>{h.direction === 'BELOW' ? 'below' : 'above'} {h.triggerRate}</td>
+                          <td>
+                            <span className={`ga-pill ${h.status === 'FILLED' ? 'ga-pill-ok' : h.status === 'ACTIVE' ? 'ga-pill-info' : h.status === 'BLOCKED' ? 'ga-pill-warn' : 'ga-pill-err'}`} style={{ fontSize: 10 }}>
+                              {h.status}
+                            </span>
+                            {h.error && <div style={{ fontSize: 10.5, color: 'var(--ink-3)', marginTop: 3 }}>{h.error}</div>}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            {h.txHash
+                              ? <ExplorerLink hash={h.txHash} base={ARC_EXPLORER}/>
+                              : h.status === 'ACTIVE' && (
+                                <button className="arc-link-btn" title="Cancel"
+                                  onClick={() => runAction('hedge', 'Cancel hedge', () =>
+                                    api.delete(`/treasury/hedges/${h.id}`).then(() => ({ ok: true, decision: 'ALLOW' as Decision })))}>
+                                  <IconClose size={11}/>
+                                </button>
+                              )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          ) : tab === 'limit' ? (
             <>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
                 <select className="ga-select" value={loFrom} onChange={e => setLoFrom(e.target.value)}>
@@ -459,7 +547,7 @@ export default function TreasuryPage() {
               )}
             </>
           )}
-          {(verdict?.where === 'limit' || verdict?.where === 'dca') && <GuardianVerdict decision={verdict.decision} reasons={verdict.reasons}/>}
+          {(verdict?.where === 'limit' || verdict?.where === 'dca' || verdict?.where === 'hedge') && <GuardianVerdict decision={verdict.decision} reasons={verdict.reasons}/>}
         </div>
       </div>
 
