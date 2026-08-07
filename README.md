@@ -2,9 +2,18 @@
 
 **Autonomous AI agents for stablecoin operations - with a Guardian policy that catches every move before it lands on-chain.**
 
-Live at **[guardagent.org](https://guardagent.org)** · Built on **[Arc](https://www.circle.com/arc)**
+Live at **[guardagent.org](https://guardagent.org)** · Built on **[Arc](https://www.circle.com/arc)** · **[Watch the demo](https://guardagent.org/demo)**
 
-Hackathon entry: **Build on Arc** by Circle, **Agentic Economy track** (also qualifies for the DeFi track). Final submission: 2026-08-09.
+### One platform, two product surfaces
+
+This repository is the whole platform. It ships two products on the same Arc rails, and each is entered in a different hackathon:
+
+| Product | What it leads with | Entered in | Deck |
+|---|---|---|---|
+| **Aegis Treasury** | An autonomous USDC treasury operator: conditional multi-step flows (limit orders, DCA, balance-to-bridge, FX hedge, USYC yield) built on Circle App Kits. Guardian is the risk layer. | **Build on Arc**, DeFi track primary, Agentic Economy secondary | [aegis-treasury](https://guardagent.org/deck/aegis-treasury/) |
+| **GuardAgent** | An autonomous stablecoin agent with a policy engine that pre-checks every move, plus x402 pay-per-inference. Guardian is the hero. | **Ignyte Stablecoin Commerce Stack Challenge**, Agentic Economy | [guardagent](https://guardagent.org/deck/guardagent/) |
+
+Same codebase, same live deployment, two framings of what it is for. The sections below describe the platform as a whole.
 
 ---
 
@@ -103,7 +112,7 @@ CCTP bridge is the moneyshot: burn on Arc Testnet, mint on Base Sepolia, real tx
 
 ## Demo path (what a judge sees)
 
-### Full product demo (3 min)
+### Full product demo (4:24, narrated) - [watch it](https://guardagent.org/demo)
 
 1. Sign in at [guardagent.org](https://guardagent.org) (Privy email OTP).
 2. Dashboard shows a **first-run checklist** - three steps to a live demo.
@@ -303,12 +312,17 @@ flowchart LR
 
 ## Hackathon context
 
-**Build on Arc** (Circle's 4-week online hackathon)
-- Tracks entered: Agentic Economy (primary), DeFi
+**Build on Arc** (Circle's 4-week online hackathon), entered as **Aegis Treasury**
+- Tracks entered: DeFi (primary), Agentic Economy (secondary)
 - Checkpoints: idea 2026-07-19, repo 2026-07-26, final MVP + video + deck 2026-08-09
 - Demo Day: 2026-08-20, top teams enter an 8-week accelerator
+- Aegis Treasury competes on **programmable money flows that only stablecoin-native rails make practical**: swap, bridge, and reinvest as one conditional operation, priced in dollars, settled sub-second, with a policy gate on every leg.
 
-GuardAgentAI competes on **agentic commerce safety**, not on payment volume. The Guardian policy engine is the differentiator: autonomous agents with real spending limits, not toy demos.
+**Ignyte Stablecoin Commerce Stack Challenge**, entered as **GuardAgent**
+- Track 4, Agentic Economy
+- GuardAgent competes on **agentic commerce safety**, not on payment volume. The Guardian policy engine is the differentiator: autonomous agents with real spending limits, not toy demos.
+
+Both entries run on this repository and on the same live deployment. The products differ in what they lead with, not in what they are built from.
 
 ---
 
