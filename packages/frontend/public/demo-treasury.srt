@@ -139,30 +139,14 @@ a limit in dollars. There is no gas token to model and no oracle
 sitting between the rule and the money.
 
 36
-00:02:04,500 --> 00:02:08,296
-Cross chain settlement runs on CCTP through Bridge Kit, burning
+00:02:04,500 --> 00:02:08,029
+Cross chain settlement runs on CCTP through Bridge Kit.
 
 37
-00:02:08,296 --> 00:02:12,801
-on Arc and minting on Base Sepolia, with a reconciler that retries
+00:02:08,029 --> 00:02:11,489
+Anything left in flight gets retried by the reconciler.
 
 38
-00:02:12,801 --> 00:02:16,853
-any transfer that burned but has not minted yet.
-
-39
-00:02:18,500 --> 00:02:19,777
-And the numbers are public.
-
-40
-00:02:19,777 --> 00:02:24,166
-Fifty one bridges, real swap volume, paid inferences over x402,
-
-41
-00:02:24,166 --> 00:02:27,254
-and a fee taken natively inside Bridge Kit and Swap Kit.
-
-42
-00:02:27,254 --> 00:02:30,853
-Verify any of it yourself at guardagent dot org.
+00:02:11,489 --> 00:02:15,831
+Every screen you have seen is live on Arc, and the code is public.
 

@@ -15,8 +15,8 @@
 <meta property="og:image:width" content="1920">
 <meta property="og:image:height" content="1080">
 <meta property="og:image:alt" content="Aegis Treasury cockpit">
-<meta property="og:video" content="https://guardagent.org/treasury-demo.mp4?v=2">
-<meta property="og:video:secure_url" content="https://guardagent.org/treasury-demo.mp4?v=2">
+<meta property="og:video" content="https://guardagent.org/treasury-demo.mp4?v=3">
+<meta property="og:video:secure_url" content="https://guardagent.org/treasury-demo.mp4?v=3">
 <meta property="og:video:type" content="video/mp4">
 <meta property="og:video:width" content="1920">
 <meta property="og:video:height" content="1080">
@@ -196,7 +196,7 @@
   <div class="wrap">
     <div class="eyebrow">Aegis Treasury · Live demo · Arc Testnet</div>
     <h1>A treasury that<br>runs <span class="glow">unattended</span>.</h1>
-    <p class="sub">Two and a half minutes, narrated, recorded in one take on Arc Testnet. A hedge is armed in the interface, the scheduler picks it up on its own, the policy engine allows it, and it settles on-chain with a real transaction hash.</p>
+    <p class="sub">Two minutes and eighteen seconds, narrated, recorded in one take on Arc Testnet. A hedge is armed in the interface, the scheduler picks it up on its own, the policy engine allows it, and it settles on-chain with a real transaction hash.</p>
   </div>
 </section>
 
@@ -205,7 +205,7 @@
     <div class="grid">
       <div class="player" id="player">
         <video id="video" poster="https://guardagent.org/demo/treasury-poster.jpg" preload="metadata" playsinline>
-          <source src="https://guardagent.org/treasury-demo.mp4?v=2" type="video/mp4">
+          <source src="https://guardagent.org/treasury-demo.mp4?v=3" type="video/mp4">
         </video>
         <div class="overlay" id="overlay">
           <button class="playbtn" aria-label="Play demo video">
@@ -225,7 +225,7 @@
 
     <div class="actions">
       <a class="btn btn-solid" href="https://app.guardagent.org/dashboard">Open the app</a>
-      <a class="btn btn-ghost" href="/treasury-demo.mp4?v=2" download>Download mp4</a>
+      <a class="btn btn-ghost" href="/treasury-demo.mp4?v=3" download>Download mp4</a>
     </div>
   </div>
 </section>
@@ -276,8 +276,7 @@
     { t: 84,  label: "Filled on Arc, with a transaction hash" },
     { t: 93,  label: "Who armed it, who executed it" },
     { t: 108, label: "The policy it was checked against" },
-    { t: 124, label: "CCTP settlement through Bridge Kit" },
-    { t: 138, label: "The numbers, in public" }
+    { t: 124, label: "CCTP settlement, and what the reconciler covers" }
   ];
 
   var video = document.getElementById('video');
