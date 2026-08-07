@@ -25,7 +25,6 @@ COPY --from=deps /app/ ./
 
 # Copy source code on top
 COPY packages/ packages/
-COPY tsconfig*.json ./
 
 # Generate Prisma client
 RUN npx prisma generate --schema=packages/backend/prisma/schema.prisma

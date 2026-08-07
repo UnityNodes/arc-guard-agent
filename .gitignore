@@ -11,6 +11,8 @@ coverage/
 
 # Build cache
 *.tsbuildinfo
+*.bak
+*.bak-*
 
 # IDE / Claude Code
 .claude/
