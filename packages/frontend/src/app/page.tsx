@@ -17,7 +17,7 @@ const T = {
   ink1:      '#2B1A10',
   ink2:      '#6B4635',
   ink3:      '#9B7B6A',
-  ink4:      '#BCA090',
+  ink4:      '#8A6A55',
   oxblood:   '#C4622A',
   oxblood2:  '#A84E1E',
   oxSoft:    'rgba(196,98,42,0.08)',
@@ -57,7 +57,7 @@ function Nav() {
           }}>GuardAgent</span>
         </a>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginLeft: 'auto' }}>
+        <div className="ga-nav" style={{ display: 'flex', alignItems: 'center', gap: 24, marginLeft: 'auto' }}>
           {[
             { label: 'Product', href: '#product' },
             { label: 'Circle stack', href: '#deliverables' },
@@ -96,7 +96,7 @@ function MockBalance() {
   return (
     <div style={{
       background: T.card, border: `1px solid ${T.border}`,
-      borderRadius: r.lg, padding: '16px 18px', minWidth: 280,
+      borderRadius: r.lg, padding: '16px 18px', minWidth: 0,
       boxShadow: `0 4px 24px rgba(90,40,10,0.08)`,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -139,7 +139,7 @@ function MockPolicy() {
   return (
     <div style={{
       background: T.card, border: `1px solid ${T.border}`,
-      borderRadius: r.lg, padding: '14px 18px', minWidth: 220,
+      borderRadius: r.lg, padding: '14px 18px', minWidth: 0,
       boxShadow: `0 4px 24px rgba(90,40,10,0.08)`,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, fontFamily: T.sans, fontSize: 11, fontWeight: 600, color: T.ink3, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
@@ -285,7 +285,7 @@ export default function LandingPage() {
       <Nav/>
 
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <section style={{ maxWidth: 1120, margin: '0 auto', padding: '80px 28px 100px', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center' }}>
+      <section className="ga-hero" style={{ maxWidth: 1120, margin: '0 auto', padding: '80px 28px 100px', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center' }}>
         <div>
           {/* live badge */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '5px 12px', background: T.okSoft, border: `1px solid rgba(26,127,75,0.20)`, borderRadius: r.pill, fontSize: 11, fontFamily: T.sans, fontWeight: 600, color: T.ok, letterSpacing: '0.04em', marginBottom: 28 }}>
@@ -347,7 +347,7 @@ export default function LandingPage() {
 
       {/* ── Stats ─────────────────────────────────────────────────────────── */}
       <div style={{ background: T.bg1, borderTop: `1px solid ${T.border}`, borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ maxWidth: 1120, margin: '0 auto', padding: '32px 28px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0 }}>
+        <div className="ga-grid4" style={{ maxWidth: 1120, margin: '0 auto', padding: '32px 28px', display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0 }}>
           {[
             { v: '37', l: 'Aegis tools' },
             { v: '9', l: 'Circle products' },
@@ -439,7 +439,7 @@ export default function LandingPage() {
               First on-chain bridge in minutes.
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 2, position: 'relative' }}>
+          <div className="ga-grid4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 2, position: 'relative' }}>
             {[
               { n: '01', h: 'Sign in', p: 'Email OTP via Privy. No seed phrases. A Circle DCW is provisioned automatically after your first login.' },
               { n: '02', h: 'Fund with faucet', p: 'One button drops $100 USDC test tokens + gas into your agent wallet from the Arc Testnet faucet.' },
@@ -467,7 +467,7 @@ export default function LandingPage() {
             Four core flows on nine Circle products. Each one runs live on testnet with on-chain receipts.
           </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
+        <div className="ga-grid4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
           {[
             { Icon: IconBridge, h: 'CCTP Crosschain', p: 'Bridge USDC from Arc Testnet to Base Sepolia or Ethereum Sepolia. Real burn on source, real mint on destination.', tag: 'Bridge Kit · CCTP V2', color: '#1D4ED8', bg: 'rgba(29,78,216,0.08)' },
             { Icon: IconBuilding, h: 'ERC-8183 Escrow', p: 'Smart-contract escrow for agent-to-agent commerce. Client posts, provider delivers, evaluator approves, USDC settles.', tag: 'Smart Contract Platform', color: '#7c3aed', bg: 'rgba(124,58,237,0.08)' },

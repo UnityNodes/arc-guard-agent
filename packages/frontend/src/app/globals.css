@@ -4161,6 +4161,14 @@ input, textarea, select { font: inherit; color: inherit; }
   color: rgb(252, 211, 77);
 }
 
+@media (max-width: 860px) {
+  .ga-hero { grid-template-columns: 1fr !important; gap: 40px !important; }
+  .ga-grid4 { grid-template-columns: 1fr 1fr !important; }
+  .ga-nav { flex-wrap: wrap !important; gap: 12px !important; }
+}
+@media (max-width: 520px) {
+  .ga-grid4 { grid-template-columns: 1fr !important; }
+}
 @media (max-width: 1000px) {
   .ga-watcher {
     grid-template-columns: 22px 36px 1fr auto;
