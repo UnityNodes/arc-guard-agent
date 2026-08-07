@@ -1,7 +1,7 @@
 {
   "name": "GuardAgent",
   "short_name": "GuardAgent",
-  "description": "AI agent monitoring your crypto wallets 24/7 on Base blockchain",
+  "description": "Autonomous USDC treasury and agent operations on Arc, guarded by a policy engine",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a14",

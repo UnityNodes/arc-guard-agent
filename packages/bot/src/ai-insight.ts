@@ -4,7 +4,7 @@ const client = new OpenAI({
   baseURL: 'https://openrouter.ai/api/v1',
   apiKey: process.env.OPENROUTER_API_KEY || '',
   defaultHeaders: {
-    'HTTP-Referer': 'https://guardagent.xyz',
+    'HTTP-Referer': 'https://guardagent.org',
     'X-Title': 'GuardAgent',
   },
 });
