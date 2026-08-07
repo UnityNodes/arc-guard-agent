@@ -1,0 +1,40 @@
+Aegis Treasury is an autonomous USDC treasury operator running live on Arc Testnet (eip155:5042002). It turns a single USDC balance into programmable money: it swaps USDC and EURC at oracle rates, bridges across chains over CCTP, rebalances through Circle Gateway, and parks idle cash in USYC yield. These run as conditional, multi-step flows that execute without a human clicking a button.
+
+WHY ARC SPECIFICALLY
+
+On a general-purpose chain, a treasury flow that swaps, then bridges, then reinvests is a stack of fragile steps: a volatile gas token to hold, unpredictable fees, and minutes of settlement uncertainty between legs. By the time the third step lands, the signal that triggered the first one may be gone.
+
+Arc removes all three problems. USDC is the native gas, so there is no second asset to manage and no paymaster to wire. Fees are dollar-denominated, so a policy limit like "max 20 USDC per action" maps to a real amount instead of an oracle estimate. Sub-second finality means a swap, bridge and deposit chain completes while the triggering signal is still valid. The product is designed around these three properties rather than ported onto them.
+
+WHAT WE BUILT
+
+A conditional automation engine that reacts to live Pyth and CoinGecko signals and executes multi-step settlement:
+
+- Price-triggered limit orders between USDC and EURC
+- DCA schedules on a fixed cadence
+- Balance-triggered bridges that move a slice over CCTP when a level is passed
+- FX hedges with oracle staleness and confidence guards, so a frozen or wide price does not trigger
+- Idle-cash sweeps into the Earn Kit vault, keeping a working buffer on Arc
+- A reconciler that retries any CCTP transfer that burned but has not yet minted
+
+Every value-moving step passes a typed policy engine before execution. It enforces per-transaction caps, daily limits, token allowlists and slippage bounds, and returns ALLOW, DENY or REQUIRE_APPROVAL. Allowed flows execute, denied flows are logged, and above-threshold flows wait for a one-tap Telegram approval. This is what makes unattended operation something a treasury owner can actually accept.
+
+Circle products used on Arc: USDC, App Kits (Bridge, Swap, Unified Balance), Circle Wallets, Earn Kit with USYC, Gateway, Nanopayments over x402, and Circle Contracts for ERC-8004 and ERC-8183. Protocol revenue is taken through the native customFee parameter inside Bridge Kit and Swap Kit, so the fee settles in the same transaction rather than as a follow-up transfer.
+
+PROCESS AND WHAT IS VERIFIABLE
+
+Everything is deployed and running, not staged for the video. Current on-chain and platform activity: 51 CCTP bridges settled totalling 68.01 USDC, 43 transactions settled, 18 swaps executed, and 2 paid x402 inferences. These figures are served live at api.guardagent.org/api/public/stats, so any claim in this submission can be checked against the database that produced it rather than taken on trust.
+
+The demo video is a single unedited take. A hedge is armed through the interface, the sixty-second scheduler picks it up unprompted, the policy engine allows it, and the row turns filled with a real transaction hash. The audit log then shows the two actors separately: the human armed it, the agent executed it nineteen seconds later.
+
+AGENTIC ECONOMY
+
+The same execution engine is driven by an AI agent, Aegis, which turns plain language into these flows and composes 37 tools, each gated by the same policy engine. The video shows a swap requested in a sentence, quoted with the slippage the policy permits, approved, and settled on Arc. The platform also exposes a public x402 pay-per-inference endpoint that charges 0.001 USDC per query and settles through Gateway, with no API key or account, which is why we are also entering the Agentic Economy track.
+
+LINKS
+
+Live: guardagent.org
+Code: github.com/UnityNodes/arc-guard-agent
+Video: guardagent.org/demo-treasury
+Deck: guardagent.org/deck/aegis-treasury
+Public stats: api.guardagent.org/api/public/stats
