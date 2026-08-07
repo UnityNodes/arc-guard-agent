@@ -33,13 +33,14 @@ This is the differentiator: **Guardian-as-canon** for agentic commerce. Everythi
 
 ---
 
-## The product, in four surfaces
+## The product, in five surfaces
 
 | Surface | What it does |
 |---|---|
 | **Guardian** | The policy you write once. `/guardian` has a live editor + dry-run console - change a rule, see exactly which past actions would have been blocked. |
-| **Aegis** | The AI agent. 37 tools spanning swap, bridge, jobs, reputation, send, faucet. Talk in `/chat`. Every tool call is pre-checked by Guardian. |
-| **Wallet** | The agent's Circle Developer-Controlled Wallet on Arc. `/wallet` is the treasury cockpit - balances, swap-hero, transaction ledger. |
+| **Aegis** | The AI agent. 37 tools spanning swap, bridge, jobs, send and yield. Talk in `/chat`. Every tool call is pre-checked by Guardian. The count is published at `/api/public/stats` so you can check it against the code. |
+| **Treasury** | `/treasury` is the operator cockpit: Gateway unified balance across 12 testnet chains, Earn Kit and USYC yield, limit orders, DCA schedules and FX hedges, plus recent CCTP settlement. Every action shows its Guardian verdict inline. |
+| **Wallet** | The agent's Circle Developer-Controlled Wallet on Arc. `/wallet` covers balances, the swap hero and the transaction ledger. |
 | **Jobs** | ERC-8183 agentic commerce escrow. Client posts a job, provider delivers, evaluator approves, USDC settles. `/jobs` has the full lifecycle stepper. |
 
 Plus an instructional audit trail (`/audit`), a live `eth_getLogs` indexer (`/activity`), watchers (`/alerts`), and a control surface (`/settings`).
