@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { getAegisStatus, getAegisWallets, searchAegisServices, aegisPay } from '../services/aegisWallet';
 import { logAudit } from '../services/audit';
+import { evaluateAction } from '../services/guardian';
 import { logger } from '../lib/logger';
 
 export const aegisRouter = Router();
@@ -42,6 +43,12 @@ aegisRouter.post('/pay', async (req: AuthRequest, res: Response): Promise<void> 
       method: parsed.data.method,
       data: parsed.data.data,
       maxAmount: parsed.data.maxAmount,
+      onPriceResolved: req.userId
+        ? async (amountUsd) => {
+            const guard = await evaluateAction(req.userId as string, { action: 'NANOPAY', amountUsd, token: 'USDC' });
+            return { allow: guard.result.decision === 'ALLOW', reasons: guard.result.reasons };
+          }
+        : undefined,
     });
     await logAudit({
       actor: `user:${req.userId ?? 'unknown'}`,

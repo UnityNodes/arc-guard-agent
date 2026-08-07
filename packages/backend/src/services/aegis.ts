@@ -490,6 +490,11 @@ const AEGIS_TOOLS: Anthropic.Tool[] = [
   },
 ];
 
+// Derived from the array itself so the number quoted in the README, the landing
+// page and /api/public/stats can never drift from the tools actually registered.
+export const AEGIS_TOOL_COUNT = AEGIS_TOOLS.length;
+export const AEGIS_TOOL_NAMES = AEGIS_TOOLS.map((t) => t.name);
+
 // ─── Tool Handlers ───────────────────────────────────────────────────────────
 // Each handler calls existing functions DIRECTLY (no HTTP self-call).
 
@@ -1024,8 +1029,21 @@ async function handleTool(
           return { result: JSON.stringify({ success: false, error: `Swap value ~$${swapUsd.toFixed(2)} exceeds your max transaction limit of $${ctx.maxTxSizeUsd}. Adjust in Settings.` }), uiAction: undefined };
         }
 
-        // Guardian approval threshold
-        const swapGuard = await evaluateAction(ctx.userId, { action: 'WITHDRAW', amountUsd: swapUsd, token: from });
+        // Guardian verdict on the swap itself
+        const swapGuard = await evaluateAction(ctx.userId, { action: 'SWAP', amountUsd: swapUsd, token: from });
+        if (swapGuard.result.decision === 'DENY') {
+          await logAudit({ userId: ctx.userId, actor: 'agent', action: 'SWAP_BLOCKED', detail: { from, to, amount, swapUsd, reasons: swapGuard.result.reasons } });
+          return {
+            result: JSON.stringify({
+              success: false,
+              blocked: true,
+              decision: 'DENY',
+              reasons: swapGuard.result.reasons,
+              error: `Guardian blocked this swap: ${swapGuard.result.reasons.join('; ')}`,
+            }),
+            uiAction: undefined,
+          };
+        }
         if (swapGuard.result.decision === 'REQUIRE_APPROVAL') {
           await logAudit({ userId: ctx.userId, actor: 'agent', action: 'SWAP_NEEDS_APPROVAL', detail: { from, to, amount, swapUsd, reasons: swapGuard.result.reasons } });
 
@@ -1860,6 +1878,13 @@ async function handleTool(
           const r = await aegisPay(serviceUrl, {
             method: input.method as 'GET' | 'POST' | undefined,
             data: input.data as unknown,
+            onPriceResolved: async (amountUsd) => {
+              const guard = await evaluateAction(ctx.userId, { action: 'NANOPAY', amountUsd, token: 'USDC' });
+              if (guard.result.decision !== 'ALLOW') {
+                await logAudit({ userId: ctx.userId, actor: 'agent', action: 'AEGIS_PAY_BLOCKED', detail: { serviceUrl, amountUsd, decision: guard.result.decision, reasons: guard.result.reasons } });
+              }
+              return { allow: guard.result.decision === 'ALLOW', reasons: guard.result.reasons };
+            },
           });
           await logAudit({
             userId: ctx.userId,

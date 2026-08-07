@@ -30,13 +30,12 @@ agentRouter.post('/pending-tx/:id/execute', requireBotSecret, async (req: Reques
       res.status(404).json({ error: 'Pending transaction not found or already processed' });
       return;
     }
-    if (!tx.toAddress) {
-      res.status(400).json({ error: 'Transaction has no destination address' });
-      return;
-    }
+    // Destination is only meaningful for the types that move funds to a third
+    // party. Swaps, earn and gateway deposits legitimately carry no toAddress,
+    // and each branch below validates what it actually needs.
     const wallet = await prisma.agentWallet.findUnique({
       where: { userId: tx.userId },
-      select: { circleWalletId: true, isActive: true },
+      select: { circleWalletId: true, isActive: true, slippagePercent: true },
     });
     if (!wallet?.circleWalletId || !wallet.isActive) {
       res.status(400).json({ error: 'Agent wallet not configured or disabled' });
@@ -62,6 +61,10 @@ agentRouter.post('/pending-tx/:id/execute', requireBotSecret, async (req: Reques
     } else if (tx.type === 'GATEWAY_DEPOSIT') {
       const { gatewayDeposit } = await import('../services/arcGateway');
       const out = await gatewayDeposit(wallet.circleWalletId, tx.amount);
+      txHash = out.txHash || null;
+    } else if (tx.type === 'SWAP' || tx.type === 'USYC_DEPOSIT' || tx.type === 'USYC_REDEEM') {
+      const { executeSwapRoute } = await import('../services/swapRouter');
+      const out = await executeSwapRoute(tx.userId, tx.tokenIn, tx.tokenOut, parseFloat(tx.amount), wallet.slippagePercent ?? 0.5);
       txHash = out.txHash || null;
     } else if (tx.type === 'GATEWAY_SPEND') {
       const parts = (tx.toAddress || '|').split('|');

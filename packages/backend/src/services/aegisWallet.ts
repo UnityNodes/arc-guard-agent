@@ -247,7 +247,15 @@ export interface PayResult {
 
 export async function aegisPay(
   serviceUrl: string,
-  opts: { chain?: string; data?: unknown; method?: string; maxAmount?: string } = {},
+  opts: {
+    chain?: string;
+    data?: unknown;
+    method?: string;
+    maxAmount?: string;
+    // Called once the service price is known and before any USDC moves, so the
+    // caller can put this spend through Guardian like every other money action.
+    onPriceResolved?: (amountUsd: number) => Promise<{ allow: boolean; reasons: string[] }>;
+  } = {},
 ): Promise<PayResult> {
   if (!/^https?:\/\/[^\s]+$/.test(serviceUrl)) throw new Error('Invalid service URL');
 
@@ -275,6 +283,20 @@ export async function aegisPay(
   const capUsdc = Number(AEGIS_MAX_USDC_PER_CALL);
   const requested = opts.maxAmount != null ? Number(opts.maxAmount) : capUsdc;
   const effectiveMax = Number.isFinite(requested) ? Math.min(requested, capUsdc) : capUsdc;
+
+  if (opts.onPriceResolved) {
+    // Price the guard at the worst case: an unpriced service can still spend up
+    // to the clamped max, so never guard on a smaller number than that.
+    const quoted = Number(String(cost ?? '').replace(/[^\d.]/g, ''));
+    const guardUsd = Math.max(Number.isFinite(quoted) ? quoted : 0, effectiveMax);
+    const verdict = await opts.onPriceResolved(guardUsd);
+    if (!verdict.allow) {
+      return {
+        ok: false, serviceUrl, cost, txHash: null, response: null,
+        error: `Guardian blocked this payment: ${verdict.reasons.join('; ')}`,
+      };
+    }
+  }
 
   const args = [
     'services', 'pay', serviceUrl,

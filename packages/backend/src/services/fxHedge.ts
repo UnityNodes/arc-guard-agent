@@ -1,6 +1,9 @@
 import { prisma } from '../lib/prisma';
-import { executeFxSwap } from './arcFx';
 import { getUsycInfo } from './arcUsyc';
+import { executeSwapRoute } from './swapRouter';
+import { evaluateAction } from './guardian';
+import { logAudit } from './audit';
+import { redis } from '../lib/redis';
 import { logger } from '../lib/logger';
 
 export interface FxRate {
@@ -88,7 +91,15 @@ export async function getTokenUsdValue(symbol: string, amount: number): Promise<
   return rate != null ? rate * amount : 0;
 }
 
+const HEDGE_LOCK_KEY = 'fx:hedge:sweep';
+const HEDGE_LOCK_TTL = 55;
+
 export async function checkAndExecuteFxHedges(): Promise<void> {
+  // The sweep runs on a 60s timer. A lock keeps a slow cycle from overlapping
+  // the next one and filling the same hedge twice.
+  const lock = await redis.set(HEDGE_LOCK_KEY, '1', 'EX', HEDGE_LOCK_TTL, 'NX').catch(() => null);
+  if (!lock) return;
+
   const activeHedges = await prisma.fxHedge.findMany({
     where: { status: 'ACTIVE' },
     include: { user: { include: { agentWallet: true } } },
@@ -108,19 +119,59 @@ export async function checkAndExecuteFxHedges(): Promise<void> {
 
       if (!shouldTrigger) continue;
       if (!hedge.user.agentWallet?.circleWalletId) continue;
+      if (!hedge.user.agentWallet.isActive) continue;
+
+      const amount = Number(hedge.amount);
+      const amountUsd = await getTokenUsdValue(hedge.fromToken, amount);
+
+      // This fires with no human in the loop, so only ALLOW proceeds. A denied or
+      // above-threshold hedge is parked in BLOCKED rather than left ACTIVE, which
+      // would re-evaluate and re-notify every cycle forever.
+      const guard = await evaluateAction(hedge.userId, { action: 'SWAP', amountUsd, token: hedge.fromToken });
+      if (guard.result.decision !== 'ALLOW') {
+        await logAudit({
+          userId: hedge.userId,
+          actor: 'agent',
+          action: 'FX_HEDGE_GATED',
+          detail: { hedgeId: hedge.id, decision: guard.result.decision, reasons: guard.result.reasons, amountUsd },
+        });
+        await prisma.fxHedge.update({
+          where: { id: hedge.id },
+          data: { status: 'BLOCKED', error: `Guardian ${guard.result.decision}: ${guard.result.reasons.join('; ')}` },
+        });
+        continue;
+      }
 
       logger.info('fx', `FX hedge triggered: ${hedge.fromToken}->${hedge.toToken} rate=${currentRate}`);
 
-      const result = await executeFxSwap(
-        hedge.user.agentWallet.circleWalletId,
-        hedge.fromToken,
-        hedge.toToken,
-        String(hedge.amount),
-      );
+      const slippage = hedge.user.agentWallet.slippagePercent ?? 0.5;
+      const result = await executeSwapRoute(hedge.userId, hedge.fromToken, hedge.toToken, amount, slippage);
 
       await prisma.fxHedge.update({
         where: { id: hedge.id },
         data: { status: 'FILLED', txHash: result.txHash, filledAt: new Date(), error: null },
+      });
+
+      // Recorded so the fill counts against the daily limit and shows on the dashboard.
+      await prisma.agentTransaction.create({
+        data: {
+          userId: hedge.userId,
+          type: 'FX_HEDGE',
+          tokenIn: hedge.fromToken,
+          tokenOut: hedge.toToken,
+          amount: String(amount),
+          amountUsd,
+          txHash: result.txHash,
+          status: 'SUCCESS',
+          network: 'arc-testnet',
+        },
+      }).catch(err => logger.error('fx', 'Failed to log FX hedge agentTransaction', err));
+
+      await logAudit({
+        userId: hedge.userId,
+        actor: 'agent',
+        action: 'FX_HEDGE_EXECUTED',
+        detail: { hedgeId: hedge.id, from: hedge.fromToken, to: hedge.toToken, amount, amountUsd, rate: currentRate, route: result.route, txHash: result.txHash },
       });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : String(err);
