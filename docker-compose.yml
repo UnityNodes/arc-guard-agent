@@ -167,7 +167,7 @@ services:
         NEXT_PUBLIC_SENTRY_DSN: ${NEXT_PUBLIC_SENTRY_DSN:-}
     container_name: guardagentai_frontend
     restart: unless-stopped
-    command: node_modules/.bin/next start -p 3000
+    command: ../../node_modules/.bin/next start -p 3000
     working_dir: /app/packages/frontend
     ports:
       - "127.0.0.1:3009:3000"
